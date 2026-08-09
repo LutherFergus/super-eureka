@@ -19,11 +19,15 @@ import {
   toImageDataUrl,
   toPngDataUrl,
 } from "@/lib/gallery";
+import { generateMosaicClient } from "@/lib/generateClient";
 import type {
   GalleryItem,
   GenerateOptions,
   GenerateResponse,
 } from "@/lib/types";
+
+const isGithubPages = process.env.NEXT_PUBLIC_GITHUB_PAGES === "1";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export function MosaicApp() {
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -84,24 +88,32 @@ export function MosaicApp() {
     setBusy(true);
 
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-xai-api-key": key,
-        },
-        body: JSON.stringify(input),
-      });
+      let payload: GenerateResponse;
 
-      const payload = (await response.json()) as GenerateResponse & {
-        error?: string;
-      };
+      if (isGithubPages) {
+        payload = await generateMosaicClient({ ...input, apiKey: key });
+      } else {
+        const response = await fetch(`${basePath}/api/generate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-xai-api-key": key,
+          },
+          body: JSON.stringify(input),
+        });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          setKeyModalOpen(true);
+        const body = (await response.json()) as GenerateResponse & {
+          error?: string;
+        };
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            setKeyModalOpen(true);
+          }
+          throw new Error(body.error || "Generation failed.");
         }
-        throw new Error(payload.error || "Generation failed.");
+
+        payload = body;
       }
 
       const rawDataUrl = toImageDataUrl(
