@@ -6,6 +6,21 @@ export type XaiImageResult = {
   mimeType: string;
 };
 
+async function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(buffer).toString("base64");
+  }
+
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
 type XaiImageResponse = {
   data?: Array<{
     b64_json?: string | null;
@@ -54,10 +69,9 @@ async function parseXaiResponse(response: Response): Promise<XaiImageResult> {
     if (!imageResponse.ok) {
       throw new Error("Failed to download generated image from xAI.");
     }
-    const buffer = Buffer.from(await imageResponse.arrayBuffer());
     const contentType = imageResponse.headers.get("content-type") || "image/png";
     return {
-      imageBase64: buffer.toString("base64"),
+      imageBase64: await arrayBufferToBase64(await imageResponse.arrayBuffer()),
       mimeType: contentType.split(";")[0].trim() || "image/png",
     };
   }

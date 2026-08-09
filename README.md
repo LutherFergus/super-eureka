@@ -2,6 +2,8 @@
 
 Next.js app that turns a text prompt (and an optional photo) into **clean vector mosaic blanket designs** using the [Grok Imagine API](https://docs.x.ai/developers/model-capabilities/imagine).
 
+**Live app:** https://lutherfergus.github.io/super-eureka/
+
 > Pulled into this repo (`super-eureka`) from [`LutherFergus/enamel-pin`](https://github.com/LutherFergus/enamel-pin) branch `cursor/mosaic-image-creator-v1-ba02`, so mosaic work has a dedicated home outside the enamel-pin app.
 
 ## Features (v1)
@@ -59,6 +61,16 @@ XAI_API_KEY=your_xai_api_key_here
 
 \*Required only if you do **not** enter a key in the UI. When a browser key is provided, it is sent to `/api/generate` via the `x-xai-api-key` header and used for that request. The browser key never becomes a public env var.
 
+## Deploy on GitHub Pages (stable URL)
+
+The reusable public URL is:
+
+**https://lutherfergus.github.io/super-eureka/**
+
+Pushes to `main` (and the setup branch) run `.github/workflows/deploy-pages.yml`, which builds a static export (`npm run build:pages`) and deploys it. On Pages, generation calls xAI directly from the browser with the key you enter in the UI.
+
+One-time if Pages ever shows 404: repo **Settings → Pages → Deploy from a GitHub Action**.
+
 ## Deploy on Netlify
 
 1. Connect this repository in Netlify.
@@ -84,12 +96,13 @@ npx netlify dev
 
 ## Scripts
 
-| Command        | Description              |
-|----------------|--------------------------|
-| `npm run dev`  | Start local development  |
-| `npm run build`| Production build         |
-| `npm start`    | Serve production build   |
-| `npm run lint` | Run ESLint               |
+| Command              | Description                         |
+|----------------------|-------------------------------------|
+| `npm run dev`        | Start local development             |
+| `npm run build`      | Production build (Node / Netlify)   |
+| `npm run build:pages`| Static export for GitHub Pages      |
+| `npm start`          | Serve production build              |
+| `npm run lint`       | Run ESLint                          |
 
 ## Project layout
 
