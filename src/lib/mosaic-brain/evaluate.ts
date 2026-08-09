@@ -102,10 +102,10 @@ export function evaluateMosaicDesign(
   if (input.colorCount === 2) {
     notes.push("2 colors = strongest mosaic contrast and easiest yarn work.");
     directives.push(
-      "STRICT 2-COLOR LOCK: only two solid colors may appear anywhere in the image. No third tint for belly, cheeks, flower centers, highlights, or outlines.",
+      "STRICT 2-COLOR LOCK: only two solid colors may appear anywhere in the image. No third tint for belly, cheeks, flower centers, highlights, outlines, or a separate white/cream paper field.",
     );
     directives.push(
-      "With 2 colors, use bold silhouette contrast (Color A vs Color B). Mid-tone accents are a failure.",
+      "With 2 colors, use bold silhouette contrast (Color A vs Color B). Mid-tone accents, grey edge AA, and black keylines are failures.",
     );
   } else if (input.colorCount >= 4) {
     notes.push(
