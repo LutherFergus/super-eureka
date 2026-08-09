@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { evaluateMosaicDesign } from "@/lib/mosaic-brain";
 import { fileToResizedDataUrl } from "@/lib/gallery";
-import { buildMosaicPrompt } from "@/lib/prompt";
 import {
   BORDER_MODE_OPTIONS,
   COLOR_COUNT_OPTIONS,
@@ -36,14 +34,12 @@ type CreatorFormProps = {
 
 function OptionGroup<T extends string>({
   label,
-  hint,
   value,
   options,
   disabled,
   onChange,
 }: {
   label: string;
-  hint?: string;
   value: T;
   options: { value: T; label: string }[];
   disabled?: boolean;
@@ -53,7 +49,6 @@ function OptionGroup<T extends string>({
   return (
     <div className="field">
       <label id={groupId}>{label}</label>
-      {hint ? <p className="field-hint">{hint}</p> : null}
       <div className="option-pills" role="group" aria-labelledby={groupId}>
         {options.map((option) => (
           <button
@@ -98,8 +93,6 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
   const [localError, setLocalError] = useState<string | null>(null);
-  const [showPromptPreview, setShowPromptPreview] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const allowed = PROPORTION_OPTIONS[orientation].map((item) => item.value);
@@ -140,7 +133,7 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
     setLocalError(null);
     const trimmed = prompt.trim();
     if (!trimmed) {
-      setLocalError("Enter a short subject — a few words is enough.");
+      setLocalError("Enter a short subject.");
       return;
     }
 
@@ -156,49 +149,16 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
     });
   }
 
-  const brain = evaluateMosaicDesign({
-    subject: prompt.trim() || "subject",
-    colorCount,
-    aspectRatio,
-    detailLevel,
-    borderMode,
-    cornerStyle: resolvedCornerStyle,
-    backgroundMode,
-    hasReferenceImage: Boolean(photoDataUrl),
-  });
-
-  const previewPrompt = buildMosaicPrompt({
-    userPrompt: prompt.trim() || "subject",
-    colorCount,
-    aspectRatio,
-    detailLevel,
-    borderMode,
-    cornerStyle: resolvedCornerStyle,
-    backgroundMode,
-    hasReferenceImage: Boolean(photoDataUrl),
-  });
-
-  async function handleCopyPrompt() {
-    try {
-      await navigator.clipboard.writeText(previewPrompt);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setLocalError("Could not copy the prompt.");
-    }
-  }
-
   return (
     <form className="creator-form" onSubmit={handleSubmit}>
+      <div className="studio-brand">Mosaic</div>
+
       <div className="field">
-        <label htmlFor={promptId}>Prompt</label>
-        <p className="field-hint">
-          A few words is enough — style settings do the rest.
-        </p>
+        <label htmlFor={promptId}>Subject</label>
         <textarea
           id={promptId}
           name="prompt"
-          rows={3}
+          rows={2}
           maxLength={1200}
           placeholder="sleepy fox"
           value={prompt}
@@ -208,30 +168,27 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
         />
       </div>
 
-      <div className="field-row">
-        <OptionGroup
-          label="Orientation"
-          hint="Square, landscape, or portrait."
-          value={orientation}
-          options={ORIENTATION_OPTIONS}
-          disabled={busy}
-          onChange={(next) => {
-            setOrientation(next);
-            setAspectRatio(defaultAspectForOrientation(next));
-          }}
-        />
-        <OptionGroup
-          label="Proportion"
-          hint={`Aspect ratio for ${orientation}.`}
-          value={aspectRatio}
-          options={PROPORTION_OPTIONS[orientation]}
-          disabled={busy}
-          onChange={(next) => {
-            setAspectRatio(next);
-            setOrientation(orientationForAspect(next));
-          }}
-        />
-      </div>
+      <OptionGroup
+        label="Orientation"
+        value={orientation}
+        options={ORIENTATION_OPTIONS}
+        disabled={busy}
+        onChange={(next) => {
+          setOrientation(next);
+          setAspectRatio(defaultAspectForOrientation(next));
+        }}
+      />
+
+      <OptionGroup
+        label="Proportion"
+        value={aspectRatio}
+        options={PROPORTION_OPTIONS[orientation]}
+        disabled={busy}
+        onChange={(next) => {
+          setAspectRatio(next);
+          setOrientation(orientationForAspect(next));
+        }}
+      />
 
       <div className="field-row">
         <OptionGroup
@@ -246,114 +203,79 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
         />
         <OptionGroup
           label="Background"
-          hint="None keeps the subject alone. Themed adds a few large related shapes."
           value={backgroundMode}
           options={[
-            { value: "none", label: "No background" },
-            { value: "themed", label: "Background" },
+            { value: "none", label: "None" },
+            { value: "themed", label: "Themed" },
           ]}
           disabled={busy}
           onChange={setBackgroundMode}
         />
       </div>
 
-      <div className="field-row">
+      <OptionGroup
+        label="Border"
+        value={borderMode}
+        options={BORDER_MODE_OPTIONS}
+        disabled={busy}
+        onChange={setBorderMode}
+      />
+
+      {borderMode === "corners" ? (
         <OptionGroup
-          label="Border"
-          hint="Tiled band, corner accents, or none."
-          value={borderMode}
-          options={BORDER_MODE_OPTIONS}
+          label="Corners"
+          value={cornerStyle}
+          options={CORNER_STYLE_OPTIONS}
           disabled={busy}
-          onChange={setBorderMode}
+          onChange={setCornerStyle}
         />
-        {borderMode === "corners" ? (
-          <OptionGroup
-            label="Corner style"
-            hint="Thick ≈ 5% of canvas width. Top and bottom match."
-            value={cornerStyle}
-            options={CORNER_STYLE_OPTIONS}
-            disabled={busy}
-            onChange={setCornerStyle}
-          />
-        ) : (
-          <div className="field" aria-hidden="true" />
-        )}
-      </div>
+      ) : null}
 
-      <div className={`brain-note is-${brain.preference}`} role="status">
-        <p className="brain-note-title">
-          Mosaic brain · {brain.preference === "ideal"
-            ? "great for yarn"
-            : brain.preference === "ok"
-              ? "workable"
-              : "busy for stitches"}
-        </p>
-        <p className="brain-note-body">
-          {brain.notes[0] ??
-            "Designs stay large, flat, and high-contrast so they chart into a blanket."}
-        </p>
-      </div>
-
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor={colorId}>Colors</label>
-          <p className="field-hint">AI chooses the palette. Default is 2.</p>
-          <div className="color-pills" role="group" aria-labelledby={colorId}>
-            <span id={colorId} className="sr-only">
-              Number of colors
-            </span>
-            {COLOR_COUNT_OPTIONS.map((count) => (
-              <button
-                key={count}
-                type="button"
-                className={
-                  count === colorCount ? "color-pill is-active" : "color-pill"
-                }
-                onClick={() => setColorCount(count)}
-                disabled={busy}
-                aria-pressed={count === colorCount}
-              >
-                {count}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="field">
-          <label htmlFor={photoId}>Optional photo</label>
-          <p className="field-hint">Turns a photo into a crisp vector motif.</p>
-          <div className="photo-row">
-            <input
-              ref={fileRef}
-              id={photoId}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              disabled={busy}
-              onChange={(event) =>
-                void handlePhotoChange(event.target.files?.[0])
+      <div className="field">
+        <label id={colorId}>Colors</label>
+        <div className="color-pills" role="group" aria-labelledby={colorId}>
+          {COLOR_COUNT_OPTIONS.map((count) => (
+            <button
+              key={count}
+              type="button"
+              className={
+                count === colorCount ? "color-pill is-active" : "color-pill"
               }
-            />
-            {photoName ? (
-              <button
-                type="button"
-                className="text-btn"
-                disabled={busy}
-                onClick={() => {
-                  if (fileRef.current) fileRef.current.value = "";
-                  void handlePhotoChange(undefined);
-                }}
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-          {photoDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              className="photo-preview"
-              src={photoDataUrl}
-              alt="Reference upload preview"
-            />
+              onClick={() => setColorCount(count)}
+              disabled={busy}
+              aria-pressed={count === colorCount}
+            >
+              {count}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="field">
+        <label htmlFor={photoId}>Photo</label>
+        <div className="photo-row">
+          <input
+            ref={fileRef}
+            id={photoId}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            disabled={busy}
+            onChange={(event) =>
+              void handlePhotoChange(event.target.files?.[0])
+            }
+          />
+          {photoName ? (
+            <button
+              type="button"
+              className="text-btn"
+              disabled={busy}
+              onClick={() => {
+                if (fileRef.current) fileRef.current.value = "";
+                void handlePhotoChange(undefined);
+              }}
+            >
+              Clear
+            </button>
           ) : null}
         </div>
       </div>
@@ -362,39 +284,9 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
 
       <div className="form-actions">
         <button className="primary-btn" type="submit" disabled={busy}>
-          {busy ? "Creating design…" : "Create design"}
-        </button>
-        <button
-          className="ghost-on-light"
-          type="button"
-          disabled={busy}
-          aria-expanded={showPromptPreview}
-          onClick={() => setShowPromptPreview((open) => !open)}
-        >
-          {showPromptPreview ? "Hide prompt" : "Preview prompt"}
+          {busy ? "Creating…" : "Create"}
         </button>
       </div>
-
-      {showPromptPreview ? (
-        <div className="prompt-preview">
-          <div className="prompt-preview-head">
-            <div>
-              <p className="prompt-preview-title">Assembled Imagine prompt</p>
-              <p className="field-hint">
-                No API call — this is exactly what Create design sends to xAI.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="text-btn"
-              onClick={() => void handleCopyPrompt()}
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <pre className="prompt-preview-body">{previewPrompt}</pre>
-        </div>
-      ) : null}
     </form>
   );
 }
