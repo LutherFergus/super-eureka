@@ -39,6 +39,7 @@ export function MosaicApp() {
   const [keyReady, setKeyReady] = useState(false);
   const [keyModalOpen, setKeyModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(false);
+  const [galleryExpanded, setGalleryExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -205,9 +206,13 @@ export function MosaicApp() {
             <a className="primary-btn" href="#create">
               Start designing
             </a>
-            <a className="ghost-btn" href="#gallery">
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => setGalleryExpanded(true)}
+            >
               Open gallery
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -227,27 +232,6 @@ export function MosaicApp() {
           </div>
         </section>
 
-        <Gallery
-          items={items}
-          onSelect={setCurrent}
-          onRemove={(id) => {
-            void (async () => {
-              const next = await removeFromGallery(id);
-              setItems(next);
-              setCurrent((prev) => {
-                if (!prev || prev.id !== id) return prev;
-                return next[0] ?? null;
-              });
-            })();
-          }}
-          onClear={() => {
-            void (async () => {
-              await clearGallery();
-              setItems([]);
-              setCurrent(null);
-            })();
-          }}
-        />
       </main>
 
       <footer className="site-footer">
@@ -256,6 +240,33 @@ export function MosaicApp() {
           your browser
         </p>
       </footer>
+
+      <Gallery
+        items={items}
+        expanded={galleryExpanded}
+        onExpandedChange={setGalleryExpanded}
+        onSelect={(item) => {
+          setCurrent(item);
+          setGalleryExpanded(false);
+        }}
+        onRemove={(id) => {
+          void (async () => {
+            const next = await removeFromGallery(id);
+            setItems(next);
+            setCurrent((prev) => {
+              if (!prev || prev.id !== id) return prev;
+              return next[0] ?? null;
+            });
+          })();
+        }}
+        onClear={() => {
+          void (async () => {
+            await clearGallery();
+            setItems([]);
+            setCurrent(null);
+          })();
+        }}
+      />
     </div>
   );
 }

@@ -64,6 +64,7 @@ textarea {
 
 .app-shell {
   min-height: 100vh;
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .hero {
@@ -208,8 +209,7 @@ textarea {
 }
 
 .creator-form,
-.result-panel,
-.gallery {
+.result-panel {
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(20, 32, 28, 0.08);
   backdrop-filter: blur(10px);
@@ -543,8 +543,93 @@ input[type="text"]:focus {
   animation: pulse 1.1s ease-in-out infinite;
 }
 
-.gallery {
-  padding: 1.35rem;
+.gallery-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: min(78vh, 720px);
+  background: rgba(246, 248, 245, 0.96);
+  border-top: 1px solid rgba(20, 32, 28, 0.1);
+  box-shadow: 0 -12px 36px rgba(20, 32, 28, 0.12);
+  backdrop-filter: blur(14px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: max-height 280ms ease;
+}
+
+.gallery-sheet.is-collapsed {
+  max-height: calc(4.35rem + env(safe-area-inset-bottom, 0px));
+}
+
+.gallery-sheet-toggle {
+  flex: 0 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  border: 0;
+  background: transparent;
+  padding: 0.7rem 1.15rem 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.gallery-sheet-handle {
+  width: 2.4rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(20, 32, 28, 0.22);
+  justify-self: center;
+  grid-column: 1 / -1;
+  margin: 0 auto 0.35rem;
+}
+
+.gallery-sheet-toggle-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.gallery-sheet-title {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+}
+
+.gallery-sheet-meta {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.gallery-sheet-chevron {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  transform: rotate(-135deg);
+  transition: transform 220ms ease;
+  opacity: 0.7;
+}
+
+.gallery-sheet.is-expanded .gallery-sheet-chevron {
+  transform: rotate(45deg);
+}
+
+.gallery-sheet-panel {
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid rgba(20, 32, 28, 0.06);
+}
+
+.gallery-sheet-inner {
+  padding: 1rem 1.15rem 1.35rem;
 }
 
 .gallery-head {
@@ -704,9 +789,13 @@ input[type="text"]:focus {
 .site-footer {
   width: min(1120px, calc(100% - 2.5rem));
   margin: 0 auto;
-  padding: 0 0 2.5rem;
+  padding: 0 0 1.5rem;
   color: var(--ink-soft);
   font-size: 0.92rem;
+}
+
+body.gallery-sheet-open {
+  overflow: hidden;
 }
 
 @keyframes rise-in {
