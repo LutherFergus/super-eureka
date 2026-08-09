@@ -15,6 +15,7 @@ import {
   toPngDataUrl,
 } from "@/lib/gallery";
 import { generateMosaicClient } from "@/lib/generateClient";
+import { lockToExactColorCount } from "@/lib/quantizeExact";
 import type {
   GalleryItem,
   GenerateOptions,
@@ -92,7 +93,11 @@ export function MosaicApp() {
         payload.imageBase64,
         payload.mimeType,
       );
-      const imageDataUrl = await toPngDataUrl(rawDataUrl);
+      const pngDataUrl = await toPngDataUrl(rawDataUrl);
+      const imageDataUrl = await lockToExactColorCount(
+        pngDataUrl,
+        payload.colorCount,
+      );
       const next = await addToGallery({
         prompt: input.prompt,
         colorCount: payload.colorCount,

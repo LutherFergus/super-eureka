@@ -21,17 +21,18 @@ export type PromptBuildInput = {
 
 function colorInstruction(colorCount: ColorCount): string {
   const hardCap = [
-    `HARD COLOR CAP: the finished image may use exactly ${colorCount} solid flat colors — no more.`,
+    `HARD COLOR CAP: the finished image may use exactly ${colorCount} solid flat colors — no more and no less in practice than ${colorCount} distinct RGB fills.`,
     "Count every region: subject, outlines, eyes, belly, cheeks, border, background, and ornaments.",
-    "Forbidden extras: tints, shades, mid-tones, highlights, lowlights, gray helpers, off-white accents, or a third 'almost the same' green/blue/etc.",
+    "Forbidden extras: tints, shades, mid-tones, highlights, lowlights, gray helpers, off-white accents, black linework as a bonus ink, or a near-match third green/blue/etc.",
     "If a shape needs separation, flip between the allowed colors or use negative space from those same colors — never invent another color.",
+    "Anti-aliased edge greys count as illegal extra colors — keep edges hard and fills perfectly flat.",
   ].join(" ");
 
   if (colorCount === 2) {
     return [
       "Palette: EXACTLY 2 yarn colors for the entire canvas (Color A + Color B only).",
       "Pick two high-contrast colors. Every pixel must be Color A or Color B.",
-      "Do not add white, cream, yellow-green, light fill, or any third accent unless that third tone is literally one of the two chosen colors.",
+      "Outlines, eyes, borders, and backgrounds must reuse Color A or Color B — never black, white, grey, cream, or a blush/belly tint as a third color.",
       "Classic two-color graphic: dark silhouette shapes on a light field, or light shapes on a dark field — still only those two colors.",
       hardCap,
     ].join(" ");
@@ -169,8 +170,11 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     ? "Reference image provided: use it only for subject identity, pose, and silhouette. Redraw as crisp vector art — not a photo, not a filtered photo. Simplify small photo details into large flat shapes."
     : "No reference image. Invent an original illustration from the subject words.";
 
+  const colorLock = colorInstruction(input.colorCount);
+
   return [
     "You are generating finished artwork for Mosaic Image Creator.",
+    `NON-NEGOTIABLE: use exactly ${input.colorCount} solid flat colors in the whole image.`,
     "Exclusive output type: mosaic-blanket-ready flat vector illustration (for later yarn/graphghan charting).",
     "The user prompt may be only a few words. Treat those words as the SUBJECT, then complete a polished illustration without asking for more detail.",
     `Subject: ${subject}`,
@@ -181,12 +185,14 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     "Keep shapes bold and easy to read at a glance. Prefer fewer larger forms over many small ones. Simple is usually better.",
     "Color obedience is mandatory: never exceed the requested color count. Extra 'accent' colors are rejected.",
     ...evaluation.directives,
-    colorInstruction(input.colorCount),
+    colorLock,
     detailInstruction(input.detailLevel),
     borderInstruction(input.borderMode, input.cornerStyle),
     backgroundInstruction(input.backgroundMode, evaluation.backgroundMotifs),
     referenceLine,
     "Deliver one cohesive finished illustration that a crocheter could chart into a blanket without losing the idea.",
+    `FINAL COLOR CHECK: before finishing, recount fills — there must be exactly ${input.colorCount} distinct solid colors and zero soft edge greys.`,
+    colorLock,
   ].join(" ");
 }
 
