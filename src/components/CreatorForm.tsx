@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { fileToResizedDataUrl } from "@/lib/gallery";
+import { buildMosaicPrompt } from "@/lib/prompt";
 import {
   BORDER_MODE_OPTIONS,
   COLOR_COUNT_OPTIONS,
@@ -93,6 +94,8 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const allowed = PROPORTION_OPTIONS[orientation].map((item) => item.value);
@@ -127,6 +130,27 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
 
   const resolvedCornerStyle =
     borderMode === "corners" ? cornerStyle : DEFAULT_CORNER_STYLE;
+
+  const assembledPrompt = buildMosaicPrompt({
+    userPrompt: prompt.trim() || "subject",
+    colorCount,
+    aspectRatio,
+    detailLevel,
+    borderMode,
+    cornerStyle: resolvedCornerStyle,
+    backgroundMode,
+    hasReferenceImage: Boolean(photoDataUrl),
+  });
+
+  async function handleCopyPrompt() {
+    try {
+      await navigator.clipboard.writeText(assembledPrompt);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setLocalError("Could not copy the prompt.");
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -286,7 +310,40 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
         <button className="primary-btn" type="submit" disabled={busy}>
           {busy ? "Creating…" : "Create"}
         </button>
+        <button
+          className="ghost-on-light"
+          type="button"
+          disabled={busy}
+          aria-expanded={showPrompt}
+          onClick={() => setShowPrompt((open) => !open)}
+        >
+          {showPrompt ? "Hide prompt" : "Show prompt"}
+        </button>
+        <button
+          className="ghost-on-light"
+          type="button"
+          disabled={busy}
+          onClick={() => void handleCopyPrompt()}
+        >
+          {copied ? "Copied" : "Copy prompt"}
+        </button>
       </div>
+
+      {showPrompt ? (
+        <div className="prompt-preview">
+          <div className="prompt-preview-head">
+            <p className="prompt-preview-title">Assembled prompt</p>
+            <button
+              type="button"
+              className="text-btn"
+              onClick={() => void handleCopyPrompt()}
+            >
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+          <pre className="prompt-preview-body">{assembledPrompt}</pre>
+        </div>
+      ) : null}
     </form>
   );
 }

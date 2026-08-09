@@ -423,22 +423,28 @@ input[type="text"]:focus {
 }
 
 .form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: stretch;
   margin-top: auto;
   padding-top: 0.35rem;
 }
 
 .form-actions .primary-btn {
+  grid-column: 1 / -1;
   width: 100%;
   padding: 0.8rem 1rem;
 }
 
+.form-actions .ghost-on-light {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+}
+
 .prompt-preview {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 0.65rem;
+  padding: 0.75rem;
   border-radius: 14px;
   border: 1px solid rgba(20, 32, 28, 0.1);
   background: rgba(255, 255, 255, 0.78);
@@ -460,14 +466,15 @@ input[type="text"]:focus {
 
 .prompt-preview-body {
   margin: 0;
-  max-height: 280px;
+  max-height: 160px;
   overflow: auto;
-  padding: 0.85rem 1rem;
+  overscroll-behavior: contain;
+  padding: 0.7rem 0.8rem;
   border-radius: 12px;
   background: rgba(20, 32, 28, 0.92);
   color: #eef6f1;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  font-size: 0.72rem;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
