@@ -1,3 +1,5 @@
+import { DEFAULT_ASPECT_RATIO } from "@/lib/types";
+
 const XAI_BASE_URL = "https://api.x.ai/v1";
 const MODEL = "grok-imagine-image-quality";
 
@@ -87,7 +89,7 @@ export async function generateMosaicImage(options: {
 }): Promise<XaiImageResult> {
   const apiKey = resolveApiKey(options.apiKey);
   const hasImage = Boolean(options.imageDataUrl);
-  const aspectRatio = options.aspectRatio || "1:1";
+  const aspectRatio = options.aspectRatio || DEFAULT_ASPECT_RATIO;
 
   const endpoint = hasImage
     ? `${XAI_BASE_URL}/images/edits`

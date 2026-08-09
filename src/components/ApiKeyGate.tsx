@@ -52,10 +52,10 @@ export function ApiKeyGate({
       aria-labelledby="api-key-title"
     >
       <form className="api-key-panel" onSubmit={handleSubmit}>
-        <p className="api-key-eyebrow">xAI · Grok Imagine</p>
-        <h2 id="api-key-title">Enter your API key</h2>
+        <p className="api-key-eyebrow">xAI</p>
+        <h2 id="api-key-title">API key needed</h2>
         <p className="api-key-copy">
-          Mosaic uses your personal key from{" "}
+          Paste a key from{" "}
           <a
             href="https://console.x.ai"
             target="_blank"
@@ -63,7 +63,7 @@ export function ApiKeyGate({
           >
             console.x.ai
           </a>
-          . It stays in this browser and is only sent to generate mosaics.
+          . It stays in this browser.
         </p>
 
         <div className="field">
@@ -87,7 +87,7 @@ export function ApiKeyGate({
 
         <div className="api-key-actions">
           <button className="primary-btn" type="submit">
-            Save key & continue
+            Save & create
           </button>
           {allowDismiss && onClose ? (
             <button

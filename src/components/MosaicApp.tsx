@@ -5,12 +5,7 @@ import { ApiKeyGate } from "@/components/ApiKeyGate";
 import { CreatorForm } from "@/components/CreatorForm";
 import { Gallery } from "@/components/Gallery";
 import { ResultPanel } from "@/components/ResultPanel";
-import {
-  clearApiKey,
-  loadApiKey,
-  maskApiKey,
-  saveApiKey,
-} from "@/lib/apiKey";
+import { loadApiKey, saveApiKey } from "@/lib/apiKey";
 import {
   addToGallery,
   clearGallery,
@@ -29,6 +24,12 @@ import type {
 const isGithubPages = process.env.NEXT_PUBLIC_GITHUB_PAGES === "1";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
+function isApiKeyError(message: string): boolean {
+  return /api key|xai_api_key|unauthorized|invalid.*key|authentication|401/i.test(
+    message,
+  );
+}
+
 export function MosaicApp() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [current, setCurrent] = useState<GalleryItem | null>(null);
@@ -36,9 +37,10 @@ export function MosaicApp() {
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [keyReady, setKeyReady] = useState(false);
   const [keyModalOpen, setKeyModalOpen] = useState(false);
-  const [editingKey, setEditingKey] = useState(false);
+  const [pendingGenerate, setPendingGenerate] =
+    useState<GenerateOptions | null>(null);
+  const [galleryExpanded, setGalleryExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,11 +50,7 @@ export function MosaicApp() {
       if (cancelled) return;
       setItems(loaded);
       if (loaded[0]) setCurrent(loaded[0]);
-
-      const storedKey = loadApiKey();
-      setApiKey(storedKey);
-      setKeyReady(true);
-      setKeyModalOpen(!storedKey);
+      setApiKey(loadApiKey());
     })();
 
     return () => {
@@ -60,32 +58,9 @@ export function MosaicApp() {
     };
   }, []);
 
-  function handleSaveKey(key: string) {
-    saveApiKey(key);
-    setApiKey(key);
-    setKeyModalOpen(false);
-    setEditingKey(false);
-    setError(null);
-  }
-
-  function handleClearKey() {
-    clearApiKey();
-    setApiKey("");
-    setEditingKey(false);
-    setKeyModalOpen(true);
-  }
-
-  async function handleGenerate(input: GenerateOptions) {
-    setError(null);
-
-    const key = apiKey.trim() || loadApiKey();
-    if (!key) {
-      setKeyModalOpen(true);
-      setError("Add your xAI API key to generate mosaics.");
-      return;
-    }
-
+  async function runGenerate(input: GenerateOptions, key: string) {
     setBusy(true);
+    setError(null);
 
     try {
       let payload: GenerateResponse;
@@ -107,9 +82,6 @@ export function MosaicApp() {
         };
 
         if (!response.ok) {
-          if (response.status === 401) {
-            setKeyModalOpen(true);
-          }
           throw new Error(body.error || "Generation failed.");
         }
 
@@ -136,126 +108,90 @@ export function MosaicApp() {
         setItems(next);
         setCurrent(next[0] ?? null);
       });
+      setPendingGenerate(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed.");
+      const message =
+        err instanceof Error ? err.message : "Generation failed.";
+      if (isApiKeyError(message)) {
+        setPendingGenerate(input);
+        setKeyModalOpen(true);
+        setError("That API key didn’t work. Enter a valid xAI key.");
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }
   }
 
+  function handleSaveKey(key: string) {
+    saveApiKey(key);
+    setApiKey(key);
+    setKeyModalOpen(false);
+    setError(null);
+
+    if (pendingGenerate) {
+      void runGenerate(pendingGenerate, key);
+    }
+  }
+
+  async function handleGenerate(input: GenerateOptions) {
+    setError(null);
+
+    const key = apiKey.trim() || loadApiKey();
+    if (!key) {
+      setPendingGenerate(input);
+      setKeyModalOpen(true);
+      return;
+    }
+
+    await runGenerate(input, key);
+  }
+
   return (
     <div className="app-shell">
       <ApiKeyGate
-        open={keyReady && keyModalOpen}
+        open={keyModalOpen}
         initialKey={apiKey}
-        allowDismiss={editingKey && Boolean(apiKey)}
+        allowDismiss
         onSave={handleSaveKey}
         onClose={() => {
           setKeyModalOpen(false);
-          setEditingKey(false);
+          setPendingGenerate(null);
         }}
       />
 
-      <header className="hero">
-        <div className="hero-atmosphere" aria-hidden="true" />
-        <div className="hero-inner">
-          <div className="hero-top">
-            <p className="brand">Mosaic</p>
-            {keyReady ? (
-              <div className="key-chip">
-                {apiKey ? (
-                  <>
-                    <span>Key {maskApiKey(apiKey)}</span>
-                    <button
-                      type="button"
-                      className="text-btn key-chip-btn"
-                      onClick={() => {
-                        setEditingKey(true);
-                        setKeyModalOpen(true);
-                      }}
-                    >
-                      Change
-                    </button>
-                    <button
-                      type="button"
-                      className="text-btn key-chip-btn"
-                      onClick={handleClearKey}
-                    >
-                      Clear
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="text-btn key-chip-btn"
-                    onClick={() => setKeyModalOpen(true)}
-                  >
-                    Add API key
-                  </button>
-                )}
-              </div>
-            ) : null}
-          </div>
-          <h1 className="hero-title">Image Creator</h1>
-          <p className="hero-lede">
-            Turn a few words — and an optional photo — into mosaic-blanket-ready
-            vector art with stitch-safe colors, borders, and backgrounds.
-          </p>
-          <div className="hero-cta">
-            <a className="primary-btn" href="#create">
-              Start designing
-            </a>
-            <a className="ghost-btn" href="#gallery">
-              Open gallery
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <main className="main">
-        <section className="create" id="create">
-          <div className="section-head">
-            <h2>Design</h2>
-            <p>
-              A mosaic brain keeps every design chartable for yarn blankets.
-              Simple usually wins.
-            </p>
-          </div>
-          <div className="create-grid">
-            <CreatorForm busy={busy || pending} onGenerate={handleGenerate} />
-            <ResultPanel item={current} busy={busy} error={error} />
-          </div>
-        </section>
-
-        <Gallery
-          items={items}
-          onSelect={setCurrent}
-          onRemove={(id) => {
-            void (async () => {
-              const next = await removeFromGallery(id);
-              setItems(next);
-              setCurrent((prev) => {
-                if (!prev || prev.id !== id) return prev;
-                return next[0] ?? null;
-              });
-            })();
-          }}
-          onClear={() => {
-            void (async () => {
-              await clearGallery();
-              setItems([]);
-              setCurrent(null);
-            })();
-          }}
-        />
+      <main className="studio">
+        <CreatorForm busy={busy || pending} onGenerate={handleGenerate} />
+        <ResultPanel item={current} busy={busy} error={error} />
       </main>
 
-      <footer className="site-footer">
-        <p>
-          Mosaic Image Creator v1 · Powered by Grok Imagine · Gallery stays in
-          your browser
-        </p>
-      </footer>
+      <Gallery
+        items={items}
+        expanded={galleryExpanded}
+        onExpandedChange={setGalleryExpanded}
+        onSelect={(item) => {
+          setCurrent(item);
+          setGalleryExpanded(false);
+        }}
+        onRemove={(id) => {
+          void (async () => {
+            const next = await removeFromGallery(id);
+            setItems(next);
+            setCurrent((prev) => {
+              if (!prev || prev.id !== id) return prev;
+              return next[0] ?? null;
+            });
+          })();
+        }}
+        onClear={() => {
+          void (async () => {
+            await clearGallery();
+            setItems([]);
+            setCurrent(null);
+          })();
+        }}
+      />
     </div>
   );
 }

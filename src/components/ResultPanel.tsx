@@ -9,43 +9,25 @@ type ResultPanelProps = {
   error: string | null;
 };
 
-function settingsLabel(item: GalleryItem): string {
-  const border =
-    item.borderMode === "none"
-      ? "no border"
-      : item.borderMode === "tiled"
-        ? "tiled border"
-        : `corners · ${item.cornerStyle}`;
-  const background =
-    item.backgroundMode === "themed" ? "themed bg" : "no bg";
-  return `${item.aspectRatio} · ${item.detailLevel} · ${background} · ${border} · ${item.colorCount} colors`;
-}
-
 export function ResultPanel({ item, busy, error }: ResultPanelProps) {
   return (
-    <section className="result-panel" aria-live="polite">
-      <div className="section-head">
-        <h2>Preview</h2>
-        <p>Download a PNG for graphing or sharing.</p>
-      </div>
-
-      <div className="preview-stage">
+    <section className="result-panel" aria-live="polite" aria-label="Design">
+      <div className="result-stage">
         {busy ? (
-          <div className="preview-empty">
+          <div className="result-empty">
             <span className="pulse-dot" aria-hidden="true" />
-            Generating a crisp vector design…
+            Creating…
           </div>
         ) : item ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              className="preview-image"
+              className="result-image"
               src={item.imageDataUrl}
-              alt={`Design: ${item.prompt}`}
+              alt={item.prompt}
             />
-            <div className="preview-meta">
-              <p className="preview-prompt">{item.prompt}</p>
-              <p className="preview-colors">{settingsLabel(item)}</p>
+            <div className="result-toolbar">
+              <p className="result-prompt">{item.prompt}</p>
               <button
                 type="button"
                 className="secondary-btn"
@@ -56,18 +38,16 @@ export function ResultPanel({ item, busy, error }: ResultPanelProps) {
                   )
                 }
               >
-                Download PNG
+                Download
               </button>
             </div>
           </>
         ) : (
-          <div className="preview-empty">
-            Your design will appear here — crisp, flat, and mosaic-ready.
-          </div>
+          <div className="result-empty">Your design shows up here.</div>
         )}
       </div>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? <p className="form-error result-error">{error}</p> : null}
     </section>
   );
 }
