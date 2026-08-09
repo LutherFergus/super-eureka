@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, cursor/pull-mosaic-from-enamel-pin-571a]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
