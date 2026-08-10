@@ -68,6 +68,10 @@ export const GALLERY_MAX_ITEMS = 50;
 export const DEFAULT_COLOR_COUNT: ColorCount = 2;
 export const COLOR_COUNT_OPTIONS: ColorCount[] = [2, 3, 4, 5];
 
+export type ImageCount = 1 | 2 | 3 | 4;
+export const DEFAULT_IMAGE_COUNT: ImageCount = 1;
+export const IMAGE_COUNT_OPTIONS: ImageCount[] = [1, 2, 3, 4];
+
 export const DEFAULT_ORIENTATION: Orientation = "portrait";
 export const DEFAULT_ASPECT_RATIO: AspectRatio = "3:4";
 export const DEFAULT_DETAIL_LEVEL: DetailLevel = "simple";
