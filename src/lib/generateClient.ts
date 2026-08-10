@@ -5,6 +5,7 @@ import {
   COLOR_COUNT_OPTIONS,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
+  DEFAULT_BLANKET_SIZE,
   DEFAULT_BORDER_MODE,
   DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
@@ -13,6 +14,7 @@ import {
   clampBorderThickness,
   type AspectRatio,
   type BackgroundMode,
+  type BlanketSize,
   type BorderMode,
   type ColorCount,
   type CornerStyle,
@@ -37,6 +39,10 @@ function isAspectRatio(value: unknown): value is AspectRatio {
 
 function isDetailLevel(value: unknown): value is DetailLevel {
   return value === "simple" || value === "detailed";
+}
+
+function isBlanketSize(value: unknown): value is BlanketSize {
+  return value === "small" || value === "large";
 }
 
 function isBorderMode(value: unknown): value is BorderMode {
@@ -79,6 +85,9 @@ export async function generateMosaicClient(
   const detailLevel = isDetailLevel(input.detailLevel)
     ? input.detailLevel
     : DEFAULT_DETAIL_LEVEL;
+  const blanketSize = isBlanketSize(input.blanketSize)
+    ? input.blanketSize
+    : DEFAULT_BLANKET_SIZE;
   const borderMode = isBorderMode(input.borderMode)
     ? input.borderMode
     : DEFAULT_BORDER_MODE;
@@ -111,6 +120,7 @@ export async function generateMosaicClient(
     colorCount,
     aspectRatio,
     detailLevel,
+    blanketSize,
     borderMode,
     cornerStyle: resolvedCornerStyle,
     borderThickness,

@@ -2,6 +2,7 @@ import { evaluateMosaicDesign } from "@/lib/mosaic-brain";
 import type {
   AspectRatio,
   BackgroundMode,
+  BlanketSize,
   BorderMode,
   BorderThickness,
   ColorCount,
@@ -16,6 +17,7 @@ export type PromptBuildInput = {
   palette?: { name: string; hex: string }[];
   aspectRatio: AspectRatio;
   detailLevel: DetailLevel;
+  blanketSize: BlanketSize;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
   borderThickness: BorderThickness;
@@ -70,10 +72,26 @@ function colorInstruction(
   ].join(" ");
 }
 
+function blanketSizeInstruction(blanketSize: BlanketSize): string {
+  if (blanketSize === "large") {
+    return [
+      "Blanket size target: LARGE (twin size and above — more stitches across the finished throw).",
+      "Because the chart is large, medium-scale features can survive: more internal markings, more prop parts, denser graphic patterning is allowed.",
+      "Still flat vector / stitch-safe — no hairline work — but do not oversimplify as if this were a tiny baby blanket.",
+    ].join(" ");
+  }
+
+  return [
+    "Blanket size target: SMALL (throws down to the smallest blankets — fewer stitches across).",
+    "Keep every shape oversized and chunky so it survives a small chart. Avoid packing in many medium features.",
+  ].join(" ");
+}
+
 function detailInstruction(
   detailLevel: DetailLevel,
   colorCount: ColorCount,
   backgroundMode: BackgroundMode,
+  blanketSize: BlanketSize,
 ): string {
   if (detailLevel === "simple") {
     return [
@@ -81,29 +99,43 @@ function detailInstruction(
       "One clear focal subject, large bold silhouettes, almost no secondary ornament.",
       "Prefer big readable shapes and generous negative space. No tiny linework.",
       "Use flat color regions; do not break the subject into many small contrasting patches.",
+      blanketSizeInstruction(blanketSize),
     ].join(" ");
   }
 
+  const sizeScale =
+    blanketSize === "large"
+      ? [
+          "DETAILED + LARGE blanket: push detail hard.",
+          "Fill the subject with many contrasting palette regions: facial features as blocks, fur/fabric patterns, spots/stripes, layered clothing or armor panels, tools held, secondary limbs/ears/horns clearly separated by color flips.",
+          "Aim for a busy-but-readable graphic poster — lots of interlocking color shapes — while every region stays chartable on a twin-or-larger grid.",
+          "If Background is THEMED, also enrich each prop with several internal contrast parts (barn siding bands, window panes, tractor body/wheels/stack, fence posts and wire as thick segments).",
+        ].join(" ")
+      : [
+          "DETAILED + SMALL blanket: add clear internal subject detail, but keep feature count moderate and shapes chunky.",
+          "A few strong markings/panels beat dozens of medium patches — small charts lose fine breakup.",
+        ].join(" ");
+
   const contrastDetail = [
-    "Create MORE internal detail inside the subject by flipping between the allowed palette colors for contrast — spots, stripes, patches, facial markings, clothing panels, belly/chest shapes, ears, horns, tools, or other LARGE feature blocks.",
-    `Stay inside the exact ${colorCount}-color palette: detail comes from contrasting those colors against each other, never from new tints, outlines-as-extra-colors, or soft shading.`,
-    "Think graphic poster detail: chunky interlocking color shapes that read as features, not hairline drawing.",
+    "Create internal detail by flipping between the allowed palette colors for contrast — never new tints, soft shading, or thin outlines as extra ink.",
+    `Stay inside the exact ${colorCount}-color palette: every extra feature is another hard flat shape in one of those colors.`,
+    "Think high-contrast graphic design, not illustration linework.",
   ].join(" ");
 
   const backgroundDetail =
     backgroundMode === "themed"
-      ? [
-          "Because background is THEMED and detail is DETAILED: also add a bit more prop detail in the background using the same palette contrast (e.g. barn boards as large color bands, hay-bale straps, fence posts, tractor wheel blocks) — still only 1–3 background props, each with a few big contrasting parts.",
-          "Background detail must remain quieter than the subject and stay concrete/thematic — never abstract circles or arcs.",
-        ].join(" ")
+      ? blanketSize === "large"
+        ? "THEMED background on LARGE: 1–3 concrete props, each with richer internal contrast detail, quieter than the subject, never abstract circles/arcs."
+        : "THEMED background on SMALL: 1–2 concrete props with simple contrast only; keep them very large and quiet."
       : "Background stays clean unless a border is requested; put the extra contrast-detail into the subject.";
 
   return [
-    "Detail level: DETAILED — richer stitch-scale graphic detail.",
-    "The subject should feel more complete and patterned than a simple silhouette: more parts, markings, and internal shapes.",
+    "Detail level: DETAILED — much richer stitch-scale graphic detail than simple mode.",
+    "The subject must look clearly more complete than a flat silhouette: more parts, markings, and internal shapes.",
+    sizeScale,
     contrastDetail,
     backgroundDetail,
-    "Still no tiny linework, no freckles/eyelashes, no dense mini patterns — every detail region must be large enough to chart in yarn.",
+    "Forbidden: freckles, eyelashes, thread-thin lines, dense mini patterns that would vanish on a yarn chart.",
   ].join(" ");
 }
 
@@ -214,6 +246,7 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     colorCount: input.colorCount,
     aspectRatio: input.aspectRatio,
     detailLevel: input.detailLevel,
+    blanketSize: input.blanketSize,
     borderMode: input.borderMode,
     cornerStyle: input.cornerStyle,
     borderThickness: input.borderThickness,
@@ -227,6 +260,11 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
 
   const colorLock = colorInstruction(input.colorCount, input.palette);
 
+  const shapeBias =
+    input.detailLevel === "detailed" && input.blanketSize === "large"
+      ? "Prefer many readable interlocking color shapes for detail — still flat, bold, and chartable — rather than a single empty silhouette."
+      : "Keep shapes bold and easy to read at a glance. Prefer fewer larger forms over many small ones when detail is simple or the blanket is small.";
+
   return [
     "You are generating finished artwork for Mosaic Image Creator.",
     `NON-NEGOTIABLE: use exactly ${input.colorCount} solid flat colors in the whole image.`,
@@ -237,7 +275,7 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     "House style: clean flat vector art; razor-sharp edges; smooth curves; solid color fills only.",
     "No gradients, textures, grain, noise, shadows, glow, 3D, photorealism, blur, or watercolor.",
     "Do NOT make the image look like a mosaic, pixels, tiles, beads, cross-stitch, graphghan, Lego, embroidery chart, or 8-bit/16-bit pixel art.",
-    "Keep shapes bold and easy to read at a glance. Prefer fewer larger forms over many small ones. Simple is usually better.",
+    shapeBias,
     "Color obedience is mandatory: never exceed the requested color count. Extra 'accent' colors are rejected.",
     ...evaluation.directives,
     colorLock,
@@ -245,6 +283,7 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
       input.detailLevel,
       input.colorCount,
       input.backgroundMode,
+      input.blanketSize,
     ),
     borderInstruction(
       input.borderMode,
@@ -265,6 +304,7 @@ export function getDesignNotes(input: PromptBuildInput) {
     colorCount: input.colorCount,
     aspectRatio: input.aspectRatio,
     detailLevel: input.detailLevel,
+    blanketSize: input.blanketSize,
     borderMode: input.borderMode,
     cornerStyle: input.cornerStyle,
     borderThickness: input.borderThickness,

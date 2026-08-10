@@ -6,6 +6,7 @@ import {
   COLOR_COUNT_OPTIONS,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
+  DEFAULT_BLANKET_SIZE,
   DEFAULT_BORDER_MODE,
   DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
@@ -14,6 +15,7 @@ import {
   clampBorderThickness,
   type AspectRatio,
   type BackgroundMode,
+  type BlanketSize,
   type BorderMode,
   type ColorCount,
   type CornerStyle,
@@ -29,6 +31,7 @@ type Body = {
   colorCount?: unknown;
   aspectRatio?: unknown;
   detailLevel?: unknown;
+  blanketSize?: unknown;
   borderMode?: unknown;
   cornerStyle?: unknown;
   borderThickness?: unknown;
@@ -66,6 +69,10 @@ function isAspectRatio(value: unknown): value is AspectRatio {
 
 function isDetailLevel(value: unknown): value is DetailLevel {
   return value === "simple" || value === "detailed";
+}
+
+function isBlanketSize(value: unknown): value is BlanketSize {
+  return value === "small" || value === "large";
 }
 
 function isBorderMode(value: unknown): value is BorderMode {
@@ -116,6 +123,9 @@ export async function POST(request: Request) {
     const detailLevel = isDetailLevel(body.detailLevel)
       ? body.detailLevel
       : DEFAULT_DETAIL_LEVEL;
+    const blanketSize = isBlanketSize(body.blanketSize)
+      ? body.blanketSize
+      : DEFAULT_BLANKET_SIZE;
     const borderMode = isBorderMode(body.borderMode)
       ? body.borderMode
       : DEFAULT_BORDER_MODE;
@@ -158,6 +168,7 @@ export async function POST(request: Request) {
       colorCount,
       aspectRatio,
       detailLevel,
+      blanketSize,
       borderMode,
       cornerStyle: resolvedCornerStyle,
       borderThickness,
