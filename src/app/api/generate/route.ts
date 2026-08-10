@@ -7,9 +7,11 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
   DEFAULT_BORDER_MODE,
+  DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
   DEFAULT_CORNER_STYLE,
   DEFAULT_DETAIL_LEVEL,
+  clampBorderThickness,
   type AspectRatio,
   type BackgroundMode,
   type BorderMode,
@@ -29,6 +31,7 @@ type Body = {
   detailLevel?: unknown;
   borderMode?: unknown;
   cornerStyle?: unknown;
+  borderThickness?: unknown;
   backgroundMode?: unknown;
   imageDataUrl?: unknown;
   apiKey?: unknown;
@@ -119,6 +122,9 @@ export async function POST(request: Request) {
     const cornerStyle = isCornerStyle(body.cornerStyle)
       ? body.cornerStyle
       : DEFAULT_CORNER_STYLE;
+    const borderThickness = clampBorderThickness(
+      body.borderThickness ?? DEFAULT_BORDER_THICKNESS,
+    );
     const backgroundMode = isBackgroundMode(body.backgroundMode)
       ? body.backgroundMode
       : DEFAULT_BACKGROUND_MODE;
@@ -154,6 +160,7 @@ export async function POST(request: Request) {
       detailLevel,
       borderMode,
       cornerStyle: resolvedCornerStyle,
+      borderThickness,
       backgroundMode,
       hasReferenceImage: Boolean(imageDataUrl),
     });
@@ -176,6 +183,7 @@ export async function POST(request: Request) {
       detailLevel,
       borderMode,
       cornerStyle: resolvedCornerStyle,
+      borderThickness,
       backgroundMode,
     };
 

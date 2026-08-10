@@ -105,6 +105,7 @@ export function MosaicApp() {
         detailLevel: payload.detailLevel,
         borderMode: payload.borderMode,
         cornerStyle: payload.cornerStyle,
+        borderThickness: payload.borderThickness,
         backgroundMode: payload.backgroundMode,
         imageDataUrl,
       });

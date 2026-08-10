@@ -267,6 +267,38 @@ textarea {
   gap: 0.55rem;
 }
 
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-value {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.thickness-slider {
+  width: 100%;
+  margin: 0.15rem 0 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.thickness-slider:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.thickness-ends {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
 textarea,
 input[type="file"],
 input[type="password"],

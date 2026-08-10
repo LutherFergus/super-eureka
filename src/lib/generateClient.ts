@@ -6,9 +6,11 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
   DEFAULT_BORDER_MODE,
+  DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
   DEFAULT_CORNER_STYLE,
   DEFAULT_DETAIL_LEVEL,
+  clampBorderThickness,
   type AspectRatio,
   type BackgroundMode,
   type BorderMode,
@@ -83,6 +85,9 @@ export async function generateMosaicClient(
   const cornerStyle = isCornerStyle(input.cornerStyle)
     ? input.cornerStyle
     : DEFAULT_CORNER_STYLE;
+  const borderThickness = clampBorderThickness(
+    input.borderThickness ?? DEFAULT_BORDER_THICKNESS,
+  );
   const backgroundMode = isBackgroundMode(input.backgroundMode)
     ? input.backgroundMode
     : DEFAULT_BACKGROUND_MODE;
@@ -108,6 +113,7 @@ export async function generateMosaicClient(
     detailLevel,
     borderMode,
     cornerStyle: resolvedCornerStyle,
+    borderThickness,
     backgroundMode,
     hasReferenceImage: Boolean(imageDataUrl),
   });
@@ -130,6 +136,7 @@ export async function generateMosaicClient(
     detailLevel,
     borderMode,
     cornerStyle: resolvedCornerStyle,
+    borderThickness,
     backgroundMode,
   };
 }
