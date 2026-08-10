@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { MosaicMark } from "@/components/MosaicMark";
 import { PromptModal } from "@/components/PromptModal";
+import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import { fileToResizedDataUrl } from "@/lib/gallery";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
@@ -187,7 +188,12 @@ export function CreatorForm() {
       <form className="creator-form" onSubmit={handleSubmit}>
         <div className="studio-brand">
           <MosaicMark className="studio-brand-mark" />
-          <span>Mosaic</span>
+          <div className="studio-brand-text">
+            <span>Mosaic</span>
+            <span className="app-version" title="App version">
+              {APP_VERSION_LABEL}
+            </span>
+          </div>
         </div>
 
         <div className="field">

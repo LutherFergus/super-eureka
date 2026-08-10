@@ -124,10 +124,24 @@ export function evaluateMosaicDesign(
 
   if (input.detailLevel === "detailed") {
     notes.push(
-      "Detailed still means a few big supporting shapes — not finer linework.",
+      "Detailed uses palette contrast for more internal subject markings and, if themed, richer background props — still large stitch-safe shapes.",
     );
+    directives.push(
+      `DETAIL=DETAILED: carve more features into the subject with contrasting blocks from the ${input.colorCount} allowed colors (markings, panels, facial/body parts as large flat shapes).`,
+    );
+    directives.push(
+      "Do not fake detail with thin lines, gradients, or extra colors — only hard flips between the locked palette colors.",
+    );
+    if (input.backgroundMode === "themed") {
+      directives.push(
+        "DETAILED + THEMED background: give background props a little more internal contrast detail (boards, posts, wheels, straps) while keeping 1–3 props and staying thematic.",
+      );
+    }
   } else {
     notes.push("Simple detail is usually best for stitch translation.");
+    directives.push(
+      "DETAIL=SIMPLE: keep the subject as a bold silhouette with minimal internal breakup.",
+    );
   }
 
   if (input.borderMode === "tiled") {
@@ -164,13 +178,16 @@ export function evaluateMosaicDesign(
 
   if (input.backgroundMode === "themed") {
     notes.push(
-      "Themed backgrounds use only a few large motifs tied to the subject.",
+      "Themed backgrounds use a few concrete props from the subject’s world — not abstract filler.",
     );
     directives.push(
-      `Background mode: THEMED for theme family "${themeFamily}". Add only these kinds of large supporting shapes: ${backgroundMotifs.join("; ")}.`,
+      `Background mode: THEMED for theme family "${themeFamily}". Prefer these concrete props: ${backgroundMotifs.join("; ")}.`,
     );
     directives.push(
-      "Background shapes must sit clearly behind/around the subject, stay fewer than the subject’s visual weight, and never become a busy landscape.",
+      "Background props must be recognizable objects/scenery tied to the subject (barn, fence, tractor, nest, boat, etc.). Forbidden: abstract circles, arcs, disks, blobs, or unrelated geometric blocks.",
+    );
+    directives.push(
+      "Keep at most 1–3 background elements, quieter than the subject, never a busy landscape.",
     );
   } else {
     directives.push(
