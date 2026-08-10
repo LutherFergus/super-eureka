@@ -1,22 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Mosaic">
-  <defs>
-    <linearGradient id="bg" x1="18" y1="8" x2="110" y2="120" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1f7a66"/>
-      <stop offset="1" stop-color="#145245"/>
-    </linearGradient>
-  </defs>
-  <!-- Soft squircle field -->
-  <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#bg)"/>
+  <!-- Full-bleed opaque field (required for iOS/Android home-screen icons) -->
+  <rect width="128" height="128" fill="#145245"/>
+  <rect width="128" height="128" fill="#1f7a66"/>
   <!-- Inner quilt plane -->
-  <rect x="22" y="22" width="84" height="84" rx="18" fill="#eef3ef"/>
+  <rect x="16" y="16" width="96" height="96" rx="20" fill="#eef3ef"/>
   <!-- Large flat quilt tiles (C2C-style) -->
-  <path d="M30 64 L64 30 L64 64 Z" fill="#9fc0b4"/>
-  <path d="M64 30 L98 64 L64 64 Z" fill="#1f7a66"/>
-  <path d="M30 64 L64 64 L64 98 Z" fill="#b56a3a"/>
-  <path d="M64 64 L98 64 L64 98 Z" fill="#14201c"/>
+  <path d="M26 64 L64 26 L64 64 Z" fill="#9fc0b4"/>
+  <path d="M64 26 L102 64 L64 64 Z" fill="#1f7a66"/>
+  <path d="M26 64 L64 64 L64 102 Z" fill="#b56a3a"/>
+  <path d="M64 64 L102 64 L64 102 Z" fill="#14201c"/>
   <!-- Corner stitch accents -->
-  <circle cx="34" cy="34" r="5" fill="#145245"/>
-  <circle cx="94" cy="34" r="5" fill="#145245"/>
-  <circle cx="34" cy="94" r="5" fill="#145245"/>
-  <circle cx="94" cy="94" r="5" fill="#145245"/>
+  <circle cx="30" cy="30" r="5.5" fill="#145245"/>
+  <circle cx="98" cy="30" r="5.5" fill="#145245"/>
+  <circle cx="30" cy="98" r="5.5" fill="#145245"/>
+  <circle cx="98" cy="98" r="5.5" fill="#145245"/>
 </svg>
