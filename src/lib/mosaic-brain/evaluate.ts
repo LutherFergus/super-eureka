@@ -8,6 +8,7 @@ import {
 import type {
   AspectRatio,
   BackgroundMode,
+  BlanketSize,
   BorderMode,
   BorderThickness,
   ColorCount,
@@ -20,6 +21,7 @@ export type DesignEvaluationInput = {
   colorCount: ColorCount;
   aspectRatio: AspectRatio;
   detailLevel: DetailLevel;
+  blanketSize: BlanketSize;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
   borderThickness: BorderThickness;
@@ -123,24 +125,41 @@ export function evaluateMosaicDesign(
   }
 
   if (input.detailLevel === "detailed") {
-    notes.push(
-      "Detailed uses palette contrast for more internal subject markings and, if themed, richer background props — still large stitch-safe shapes.",
-    );
-    directives.push(
-      `DETAIL=DETAILED: carve more features into the subject with contrasting blocks from the ${input.colorCount} allowed colors (markings, panels, facial/body parts as large flat shapes).`,
-    );
-    directives.push(
-      "Do not fake detail with thin lines, gradients, or extra colors — only hard flips between the locked palette colors.",
-    );
-    if (input.backgroundMode === "themed") {
-      directives.push(
-        "DETAILED + THEMED background: give background props a little more internal contrast detail (boards, posts, wheels, straps) while keeping 1–3 props and staying thematic.",
+    if (input.blanketSize === "large") {
+      notes.push(
+        "Detailed + large (twin+) allows denser palette-contrast detail in subject and themed props.",
       );
+      directives.push(
+        `DETAIL=DETAILED, SIZE=LARGE (twin and above): pack the subject with many contrasting ${input.colorCount}-color regions — markings, panels, facial/body parts, held objects — as flat interlocking shapes.`,
+      );
+      directives.push(
+        "Large charts can hold medium features; do not default to an empty silhouette. Still no hairline work or extra colors.",
+      );
+      if (input.backgroundMode === "themed") {
+        directives.push(
+          "DETAILED + LARGE + THEMED: enrich each background prop with several internal contrast parts while keeping 1–3 props total.",
+        );
+      }
+    } else {
+      notes.push(
+        "Detailed + small (throw and below) adds clear subject markings but keeps shapes chunky.",
+      );
+      directives.push(
+        `DETAIL=DETAILED, SIZE=SMALL (throw down to smallest): add clear internal subject contrast with the ${input.colorCount} colors, but keep feature count moderate and shapes oversized.`,
+      );
+      directives.push(
+        "Do not fake detail with thin lines, gradients, or extra colors — only hard flips between the locked palette colors.",
+      );
+      if (input.backgroundMode === "themed") {
+        directives.push(
+          "DETAILED + SMALL + THEMED: 1–2 concrete props with simple contrast only.",
+        );
+      }
     }
   } else {
     notes.push("Simple detail is usually best for stitch translation.");
     directives.push(
-      "DETAIL=SIMPLE: keep the subject as a bold silhouette with minimal internal breakup.",
+      `DETAIL=SIMPLE, SIZE=${input.blanketSize.toUpperCase()}: keep the subject as a bold silhouette with minimal internal breakup.`,
     );
   }
 

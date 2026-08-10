@@ -298,6 +298,11 @@ textarea {
   font-size: 0.92rem;
 }
 
+.size-hint {
+  margin: -0.35rem 0 0.7rem;
+  font-size: 0.84rem;
+}
+
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -15,6 +15,9 @@ export type Orientation = "square" | "landscape" | "portrait";
 
 export type DetailLevel = "simple" | "detailed";
 
+/** Target blanket scale — gates how much stitch-scale detail the prompt allows. */
+export type BlanketSize = "small" | "large";
+
 export type BorderMode = "none" | "tiled" | "corners";
 
 export type CornerStyle = "thin" | "thick" | "artistic";
@@ -29,6 +32,7 @@ export interface GenerateOptions {
   colorCount: ColorCount;
   aspectRatio: AspectRatio;
   detailLevel: DetailLevel;
+  blanketSize: BlanketSize;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
   borderThickness: BorderThickness;
@@ -75,6 +79,14 @@ export const IMAGE_COUNT_OPTIONS: ImageCount[] = [1, 2, 3, 4];
 export const DEFAULT_ORIENTATION: Orientation = "portrait";
 export const DEFAULT_ASPECT_RATIO: AspectRatio = "3:4";
 export const DEFAULT_DETAIL_LEVEL: DetailLevel = "simple";
+export const DEFAULT_BLANKET_SIZE: BlanketSize = "small";
+export const BLANKET_SIZE_OPTIONS: {
+  value: BlanketSize;
+  label: string;
+}[] = [
+  { value: "small", label: "Small" },
+  { value: "large", label: "Large" },
+];
 export const DEFAULT_BORDER_MODE: BorderMode = "none";
 export const DEFAULT_CORNER_STYLE: CornerStyle = "thin";
 export const DEFAULT_BORDER_THICKNESS: BorderThickness = 3;

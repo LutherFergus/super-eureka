@@ -6,6 +6,7 @@ import { PromptModal } from "@/components/PromptModal";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
+  BLANKET_SIZE_OPTIONS,
   BORDER_MODE_OPTIONS,
   BORDER_THICKNESS_MAX,
   BORDER_THICKNESS_MIN,
@@ -13,6 +14,7 @@ import {
   CORNER_STYLE_OPTIONS,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
+  DEFAULT_BLANKET_SIZE,
   DEFAULT_BORDER_MODE,
   DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
@@ -28,6 +30,7 @@ import {
   orientationForAspect,
   type AspectRatio,
   type BackgroundMode,
+  type BlanketSize,
   type BorderMode,
   type BorderThickness,
   type ColorCount,
@@ -97,6 +100,8 @@ export function CreatorForm() {
     useState<AspectRatio>(DEFAULT_ASPECT_RATIO);
   const [detailLevel, setDetailLevel] =
     useState<DetailLevel>(DEFAULT_DETAIL_LEVEL);
+  const [blanketSize, setBlanketSize] =
+    useState<BlanketSize>(DEFAULT_BLANKET_SIZE);
   const [borderMode, setBorderMode] = useState<BorderMode>(DEFAULT_BORDER_MODE);
   const [cornerStyle, setCornerStyle] = useState<CornerStyle>(
     DEFAULT_CORNER_STYLE,
@@ -140,6 +145,7 @@ export function CreatorForm() {
       palette,
       aspectRatio,
       detailLevel,
+      blanketSize,
       borderMode,
       cornerStyle: resolvedCornerStyle,
       borderThickness,
@@ -221,15 +227,27 @@ export function CreatorForm() {
             onChange={setDetailLevel}
           />
           <OptionGroup
-            label="Background"
-            value={backgroundMode}
-            options={[
-              { value: "none", label: "None" },
-              { value: "themed", label: "Themed" },
-            ]}
-            onChange={setBackgroundMode}
+            label="Size"
+            value={blanketSize}
+            options={BLANKET_SIZE_OPTIONS}
+            onChange={setBlanketSize}
           />
         </div>
+        <p className="field-hint size-hint">
+          {blanketSize === "large"
+            ? "Large: twin size and above — more detail can survive."
+            : "Small: throws down to the smallest blankets — keep shapes chunky."}
+        </p>
+
+        <OptionGroup
+          label="Background"
+          value={backgroundMode}
+          options={[
+            { value: "none", label: "None" },
+            { value: "themed", label: "Themed" },
+          ]}
+          onChange={setBackgroundMode}
+        />
 
         <OptionGroup
           label="Border"
