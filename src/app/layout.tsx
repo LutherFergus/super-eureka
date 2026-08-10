@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: "Mosaic Image Creator",
   description:
     "Design clean vector mosaic blanket patterns from a text prompt and optional photo using Grok Imagine.",
+  applicationName: "Mosaic",
 };
 
 export default function RootLayout({
