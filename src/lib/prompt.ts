@@ -70,19 +70,40 @@ function colorInstruction(
   ].join(" ");
 }
 
-function detailInstruction(detailLevel: DetailLevel): string {
+function detailInstruction(
+  detailLevel: DetailLevel,
+  colorCount: ColorCount,
+  backgroundMode: BackgroundMode,
+): string {
   if (detailLevel === "simple") {
     return [
       "Detail level: SIMPLE (preferred for mosaic blankets).",
       "One clear focal subject, large bold silhouettes, almost no secondary ornament.",
       "Prefer big readable shapes and generous negative space. No tiny linework.",
+      "Use flat color regions; do not break the subject into many small contrasting patches.",
     ].join(" ");
   }
 
+  const contrastDetail = [
+    "Create MORE internal detail inside the subject by flipping between the allowed palette colors for contrast — spots, stripes, patches, facial markings, clothing panels, belly/chest shapes, ears, horns, tools, or other LARGE feature blocks.",
+    `Stay inside the exact ${colorCount}-color palette: detail comes from contrasting those colors against each other, never from new tints, outlines-as-extra-colors, or soft shading.`,
+    "Think graphic poster detail: chunky interlocking color shapes that read as features, not hairline drawing.",
+  ].join(" ");
+
+  const backgroundDetail =
+    backgroundMode === "themed"
+      ? [
+          "Because background is THEMED and detail is DETAILED: also add a bit more prop detail in the background using the same palette contrast (e.g. barn boards as large color bands, hay-bale straps, fence posts, tractor wheel blocks) — still only 1–3 background props, each with a few big contrasting parts.",
+          "Background detail must remain quieter than the subject and stay concrete/thematic — never abstract circles or arcs.",
+        ].join(" ")
+      : "Background stays clean unless a border is requested; put the extra contrast-detail into the subject.";
+
   return [
-    "Detail level: DETAILED — still stitch-scale.",
-    "A richer scene with only a few supporting LARGE shapes around the subject.",
-    "More content does NOT mean finer detail. No tiny patterns, no busy filler.",
+    "Detail level: DETAILED — richer stitch-scale graphic detail.",
+    "The subject should feel more complete and patterned than a simple silhouette: more parts, markings, and internal shapes.",
+    contrastDetail,
+    backgroundDetail,
+    "Still no tiny linework, no freckles/eyelashes, no dense mini patterns — every detail region must be large enough to chart in yarn.",
   ].join(" ");
 }
 
@@ -220,7 +241,11 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     "Color obedience is mandatory: never exceed the requested color count. Extra 'accent' colors are rejected.",
     ...evaluation.directives,
     colorLock,
-    detailInstruction(input.detailLevel),
+    detailInstruction(
+      input.detailLevel,
+      input.colorCount,
+      input.backgroundMode,
+    ),
     borderInstruction(
       input.borderMode,
       input.cornerStyle,
