@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { MosaicMark } from "@/components/MosaicMark";
 import { fileToResizedDataUrl } from "@/lib/gallery";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
@@ -186,7 +187,10 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
 
   return (
     <form className="creator-form" onSubmit={handleSubmit}>
-      <div className="studio-brand">Mosaic</div>
+      <div className="studio-brand">
+        <MosaicMark className="studio-brand-mark" />
+        <span>Mosaic</span>
+      </div>
 
       <div className="field">
         <label htmlFor={promptId}>Subject</label>
