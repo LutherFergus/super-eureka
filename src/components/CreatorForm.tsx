@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { MosaicMark } from "@/components/MosaicMark";
 import { PromptModal } from "@/components/PromptModal";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
-import { fileToResizedDataUrl } from "@/lib/gallery";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
   BORDER_MODE_OPTIONS,
@@ -19,7 +18,9 @@ import {
   DEFAULT_COLOR_COUNT,
   DEFAULT_CORNER_STYLE,
   DEFAULT_DETAIL_LEVEL,
+  DEFAULT_IMAGE_COUNT,
   DEFAULT_ORIENTATION,
+  IMAGE_COUNT_OPTIONS,
   ORIENTATION_OPTIONS,
   PROPORTION_OPTIONS,
   clampBorderThickness,
@@ -32,6 +33,7 @@ import {
   type ColorCount,
   type CornerStyle,
   type DetailLevel,
+  type ImageCount,
   type Orientation,
 } from "@/lib/types";
 import {
@@ -41,7 +43,7 @@ import {
   resizePaletteIds,
 } from "@/lib/yarnColors";
 
-function OptionGroup<T extends string>({
+function OptionGroup<T extends string | number>({
   label,
   value,
   options,
@@ -61,7 +63,7 @@ function OptionGroup<T extends string>({
       <div className="option-pills" role="group" aria-labelledby={groupId}>
         {options.map((option) => (
           <button
-            key={option.value}
+            key={String(option.value)}
             type="button"
             className={
               option.value === value ? "option-pill is-active" : "option-pill"
@@ -81,9 +83,8 @@ function OptionGroup<T extends string>({
 export function CreatorForm() {
   const promptId = useId();
   const colorId = useId();
-  const photoId = useId();
+  const imagesId = useId();
   const thicknessId = useId();
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [prompt, setPrompt] = useState("");
   const [colorCount, setColorCount] = useState<ColorCount>(DEFAULT_COLOR_COUNT);
@@ -106,11 +107,12 @@ export function CreatorForm() {
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(
     DEFAULT_BACKGROUND_MODE,
   );
-  const [photoName, setPhotoName] = useState<string | null>(null);
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
+  const [imageCount, setImageCount] = useState<ImageCount>(DEFAULT_IMAGE_COUNT);
   const [localError, setLocalError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPrompt, setModalPrompt] = useState("");
+  const [modalImageCount, setModalImageCount] =
+    useState<ImageCount>(DEFAULT_IMAGE_COUNT);
 
   useEffect(() => {
     const allowed = PROPORTION_OPTIONS[orientation].map((item) => item.value);
@@ -122,30 +124,6 @@ export function CreatorForm() {
   useEffect(() => {
     setPaletteIds((current) => resizePaletteIds(current, colorCount));
   }, [colorCount]);
-
-  async function handlePhotoChange(file: File | undefined) {
-    setLocalError(null);
-    if (!file) {
-      setPhotoName(null);
-      setPhotoDataUrl(undefined);
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setLocalError("Please choose a PNG, JPEG, or WebP photo.");
-      return;
-    }
-
-    try {
-      const dataUrl = await fileToResizedDataUrl(file);
-      setPhotoName(file.name);
-      setPhotoDataUrl(dataUrl);
-    } catch {
-      setLocalError("Could not read that photo.");
-      setPhotoName(null);
-      setPhotoDataUrl(undefined);
-    }
-  }
 
   const resolvedCornerStyle =
     borderMode === "corners" ? cornerStyle : DEFAULT_CORNER_STYLE;
@@ -166,7 +144,8 @@ export function CreatorForm() {
       cornerStyle: resolvedCornerStyle,
       borderThickness,
       backgroundMode,
-      hasReferenceImage: Boolean(photoDataUrl),
+      // Photo upload is shelved for now.
+      hasReferenceImage: false,
     });
   }
 
@@ -180,6 +159,7 @@ export function CreatorForm() {
     }
 
     setModalPrompt(assemblePrompt(trimmed));
+    setModalImageCount(imageCount);
     setModalOpen(true);
   }
 
@@ -354,29 +334,21 @@ export function CreatorForm() {
         </div>
 
         <div className="field">
-          <label htmlFor={photoId}>Photo</label>
-          <div className="photo-row">
-            <input
-              ref={fileRef}
-              id={photoId}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) =>
-                void handlePhotoChange(event.target.files?.[0])
-              }
-            />
-            {photoName ? (
+          <label id={imagesId}>Images</label>
+          <div className="color-pills" role="group" aria-labelledby={imagesId}>
+            {IMAGE_COUNT_OPTIONS.map((count) => (
               <button
+                key={count}
                 type="button"
-                className="text-btn"
-                onClick={() => {
-                  if (fileRef.current) fileRef.current.value = "";
-                  void handlePhotoChange(undefined);
-                }}
+                className={
+                  count === imageCount ? "color-pill is-active" : "color-pill"
+                }
+                onClick={() => setImageCount(count)}
+                aria-pressed={count === imageCount}
               >
-                Clear
+                {count}
               </button>
-            ) : null}
+            ))}
           </div>
         </div>
 
@@ -392,6 +364,7 @@ export function CreatorForm() {
       <PromptModal
         open={modalOpen}
         initialPrompt={modalPrompt}
+        imageCount={modalImageCount}
         onClose={() => setModalOpen(false)}
       />
     </>
