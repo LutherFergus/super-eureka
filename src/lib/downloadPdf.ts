@@ -30,14 +30,6 @@ export function sanitizeFilename(name: string): string {
     .replace(/[. ]+$/g, "");
 }
 
-function isAppleTouchDevice(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-}
-
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -163,25 +155,65 @@ export async function imageDataUrlToPdfBlob(
   return new Blob([pdfBytes], { type: "application/pdf" });
 }
 
-export async function downloadOrSharePdf(
+async function saveWithFilePicker(
+  blob: Blob,
+  safeName: string,
+): Promise<boolean> {
+  const picker = (
+    window as Window & {
+      showSaveFilePicker?: (options: {
+        suggestedName?: string;
+        types?: Array<{
+          description: string;
+          accept: Record<string, string[]>;
+        }>;
+      }) => Promise<{
+        createWritable: () => Promise<{
+          write: (data: Blob) => Promise<void>;
+          close: () => Promise<void>;
+        }>;
+      }>;
+    }
+  ).showSaveFilePicker;
+
+  if (typeof picker !== "function") return false;
+
+  try {
+    const handle = await picker({
+      suggestedName: safeName,
+      types: [
+        {
+          description: "PDF",
+          accept: { "application/pdf": [".pdf"] },
+        },
+      ],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+    return false;
+  }
+}
+
+/** Download the PDF directly to Files/Downloads — no share sheet. */
+export async function downloadPdf(
   blob: Blob,
   filename: string,
-): Promise<"shared" | "downloaded" | "aborted"> {
+): Promise<"downloaded" | "aborted"> {
   const safeName = sanitizeFilename(filename).replace(/\.pdf$/i, "") + ".pdf";
-  const file = new File([blob], safeName, { type: "application/pdf" });
 
-  if (
-    isAppleTouchDevice() &&
-    typeof navigator.canShare === "function" &&
-    navigator.canShare({ files: [file] })
-  ) {
-    try {
-      await navigator.share({ files: [file] });
-      return "shared";
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return "aborted";
-      }
+  try {
+    if (await saveWithFilePicker(blob, safeName)) {
+      return "downloaded";
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return "aborted";
     }
   }
 
@@ -189,9 +221,11 @@ export async function downloadOrSharePdf(
   const link = document.createElement("a");
   link.href = url;
   link.download = safeName;
+  link.rel = "noopener";
+  link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
   return "downloaded";
 }

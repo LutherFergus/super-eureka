@@ -5,7 +5,7 @@ import { NamePrompt } from "@/components/NamePrompt";
 import {
   blanketTypeLabel,
   buildDownloadBaseName,
-  downloadOrSharePdf,
+  downloadPdf,
   imageDataUrlToPdfBlob,
 } from "@/lib/downloadPdf";
 import type { GalleryItem } from "@/lib/types";
@@ -30,10 +30,7 @@ export function ResultPanel({ item, busy, error }: ResultPanelProps) {
     try {
       const baseName = buildDownloadBaseName(name, item.aspectRatio);
       const blob = await imageDataUrlToPdfBlob(item.imageDataUrl, baseName);
-      const result = await downloadOrSharePdf(blob, `${baseName}.pdf`);
-      if (result === "aborted") {
-        setLocalError(null);
-      }
+      await downloadPdf(blob, `${baseName}.pdf`);
     } catch (err) {
       setLocalError(
         err instanceof Error ? err.message : "Could not build the PDF.",
