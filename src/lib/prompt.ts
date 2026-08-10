@@ -173,9 +173,11 @@ function backgroundInstruction(
 
   return [
     "Background: THEMED.",
-    "Add a sparse thematic background suggested by the subject — large shapes only.",
-    `Allowed background motifs: ${motifs.join("; ")}.`,
-    "Use at most 1–3 background elements total. They must be oversized, flat, and quieter than the subject.",
+    "Add a sparse background of concrete props that belong to the subject’s world — the kind of things you’d actually see with that subject.",
+    "Example intent: a cow might have a barn, lean-to, tractor, hay bale, or fence — not random shapes.",
+    `Preferred background props for this subject: ${motifs.join("; ")}.`,
+    "Use at most 1–3 background elements total. They must be oversized, flat, quieter than the subject, and clearly recognizable objects or scenery.",
+    "Forbidden in the background: abstract circles, arcs, disks, blobs, floating geometric blocks, decorative filler shapes, or anything unrelated to the subject’s theme.",
     "No busy landscapes, no tiny distant objects, no textured ground fills.",
   ].join(" ");
 }

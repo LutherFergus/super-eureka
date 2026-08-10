@@ -43,6 +43,7 @@ export const FORBIDDEN_VISUALS = [
   "readable small text or logos",
   "busy photographic backgrounds",
   "pixel mosaic / 8-bit / bead grid appearance",
+  "abstract background filler (random circles, arcs, disks, blobs, or geometric blocks unrelated to the subject)",
 ] as const;
 
 /** Patterns that translate well into stitch charts. */
@@ -52,7 +53,7 @@ export const POSSIBLE_VISUALS = [
   "chunky botanical shapes",
   "simple animal profiles",
   "thick frames and oversized corner motifs",
-  "1–3 large thematic background shapes",
+  "1–3 large concrete thematic props behind the subject",
   "high-contrast flat color fields",
   "clear negative space",
 ] as const;
@@ -72,9 +73,184 @@ export type ThemeFamily =
 type ThemeRule = {
   family: ThemeFamily;
   keywords: string[];
-  /** Large stitch-safe background motifs tied to the subject. */
+  /** Large stitch-safe background props tied to the subject world. */
   backgroundMotifs: string[];
 };
+
+/** Concrete props for specific subjects — preferred over family defaults. */
+const SUBJECT_BACKGROUND_HINTS: { match: RegExp; motifs: string[] }[] = [
+  {
+    match: /\b(cows?|cattle|bulls?|calves|calf)\b/i,
+    motifs: [
+      "a barn or lean-to silhouette",
+      "one large hay bale",
+      "a tractor",
+      "a short stretch of barbed-wire or post fence",
+    ],
+  },
+  {
+    match: /\b(horses?|ponies|pony|foals?|mustangs?)\b/i,
+    motifs: [
+      "a barn or stable silhouette",
+      "a fence rail or paddock post line",
+      "a large hay bale",
+      "a water trough",
+    ],
+  },
+  {
+    match: /\b(pigs?|hogs?|piglets?)\b/i,
+    motifs: [
+      "a lean-to or sty silhouette",
+      "a feed trough",
+      "a fence panel",
+      "a large hay or straw pile",
+    ],
+  },
+  {
+    match: /\b(sheep|lambs?|goats?|kids?)\b/i,
+    motifs: [
+      "a barn or lean-to",
+      "a stone wall or fence",
+      "a large hay bale",
+      "a simple rolling pasture hill",
+    ],
+  },
+  {
+    match: /\b(chickens?|roosters?|hens?|chicks?|ducks?|geese|goose|turkeys?)\b/i,
+    motifs: [
+      "a coop or barn silhouette",
+      "a nest box or crate",
+      "a fence post line",
+      "a feed bucket",
+    ],
+  },
+  {
+    match: /\b(dogs?|puppies|puppy)\b/i,
+    motifs: [
+      "a doghouse",
+      "a large bone",
+      "a fence or gate",
+      "a food bowl",
+    ],
+  },
+  {
+    match: /\b(cats?|kittens?|kitty)\b/i,
+    motifs: [
+      "a windowsill or window frame",
+      "a yarn ball or cushion",
+      "a simple house plant",
+      "a door or stoop silhouette",
+    ],
+  },
+  {
+    match: /\b(foxes?|fox)\b/i,
+    motifs: [
+      "a den or hollow-log silhouette",
+      "a few large pine trees",
+      "a simple woodland hill",
+      "oversized mushrooms (1–2 only)",
+    ],
+  },
+  {
+    match: /\b(bears?|cubs?)\b/i,
+    motifs: [
+      "a mountain or forest silhouette",
+      "a large pine or fir tree",
+      "a cave mouth",
+      "a simple river band",
+    ],
+  },
+  {
+    match: /\b(owls?|birds?|eagles?|hawks?|robins?|cardinals?)\b/i,
+    motifs: [
+      "a large tree branch or nest",
+      "a few oversized leaves",
+      "a simple moon",
+      "a barn or silo silhouette (if farm bird)",
+    ],
+  },
+  {
+    match: /\b(fish|whales?|sharks?|dolphins?|octopuses?|octopus)\b/i,
+    motifs: [
+      "large seaweed or kelp fronds",
+      "a few oversized bubbles",
+      "a coral mound or rock",
+      "a simple wave band",
+    ],
+  },
+  {
+    match: /\b(dinosaurs?|t-rex|triceratops|stegosaurus)\b/i,
+    motifs: [
+      "a volcano silhouette",
+      "large fern or prehistoric plant shapes",
+      "a rocky cliff band",
+      "a simple sun disk",
+    ],
+  },
+  {
+    match: /\b(tractors?|farms?|barns?|farmers?)\b/i,
+    motifs: [
+      "a barn silhouette",
+      "hay bales",
+      "a fence line",
+      "a silo",
+    ],
+  },
+  {
+    match: /\b(trucks?|cars?|vehicles?)\b/i,
+    motifs: [
+      "a simple road band",
+      "a garage or shed silhouette",
+      "a few large roadside trees",
+      "a stop sign or mailbox (oversized, single)",
+    ],
+  },
+  {
+    match: /\b(trains?|locomotives?)\b/i,
+    motifs: [
+      "rail tracks as a simple band",
+      "a station or water tower silhouette",
+      "a few large hills",
+      "a signal post",
+    ],
+  },
+  {
+    match: /\b(boats?|ships?|sailboats?|lighthouses?)\b/i,
+    motifs: [
+      "a lighthouse",
+      "large wave bands",
+      "a dock or pier silhouette",
+      "a simple shoreline",
+    ],
+  },
+  {
+    match: /\b(flowers?|gardens?|roses?|sunflowers?)\b/i,
+    motifs: [
+      "a garden fence or gate",
+      "a watering can",
+      "a flower pot or planter",
+      "a simple shed or trellis",
+    ],
+  },
+  {
+    match: /\b(christmas|santa|snowmen|snowman|reindeer)\b/i,
+    motifs: [
+      "a gift box",
+      "a large Christmas tree",
+      "a chimney or cottage silhouette",
+      "a simple snowbank",
+    ],
+  },
+  {
+    match: /\b(halloween|pumpkins?|ghosts?|witches?)\b/i,
+    motifs: [
+      "a jack-o'-lantern",
+      "a fence or gate",
+      "a haunted house silhouette",
+      "a large crescent moon",
+    ],
+  },
+];
 
 export const THEME_RULES: ThemeRule[] = [
   {
@@ -100,11 +276,26 @@ export const THEME_RULES: ThemeRule[] = [
       "unicorn",
       "pet",
       "animal",
+      "cow",
+      "cattle",
+      "bull",
+      "calf",
+      "pig",
+      "sheep",
+      "lamb",
+      "goat",
+      "chicken",
+      "rooster",
+      "hen",
+      "duck",
+      "turkey",
+      "pony",
+      "dinosaur",
     ],
     backgroundMotifs: [
-      "one oversized moon or sun disk",
-      "a few large tree or hill silhouettes",
-      "a simple horizon band",
+      "one concrete habitat prop tied to the animal (barn, den, nest, coop, or similar)",
+      "one oversized related object from that animal’s world (hay bale, trough, branch, rock)",
+      "a short fence, tree, or shelter silhouette — never random circles or arcs",
     ],
   },
   {
@@ -123,9 +314,9 @@ export const THEME_RULES: ThemeRule[] = [
       "anchor",
     ],
     backgroundMotifs: [
-      "2–3 large wave bands",
-      "one big sun disk",
-      "a simple shoreline shape",
+      "a lighthouse, dock, or boat silhouette",
+      "large seaweed or coral shapes",
+      "a simple shoreline or wave band",
     ],
   },
   {
@@ -133,8 +324,8 @@ export const THEME_RULES: ThemeRule[] = [
     keywords: ["cloud", "sky", "rainbow", "storm", "kite", "balloon"],
     backgroundMotifs: [
       "2–3 oversized cloud silhouettes",
-      "one large sun or moon",
-      "a simple ground strip",
+      "a kite string post, balloon basket, or similar sky prop",
+      "a simple ground strip with a tree or hill",
     ],
   },
   {
@@ -150,9 +341,9 @@ export const THEME_RULES: ThemeRule[] = [
       "moon",
     ],
     backgroundMotifs: [
-      "one large planet disk",
+      "one large planet",
+      "a rocket, satellite, or crater prop",
       "3–5 oversized stars only (never a dense starfield)",
-      "a simple crescent moon",
     ],
   },
   {
@@ -169,9 +360,9 @@ export const THEME_RULES: ThemeRule[] = [
       "barn",
     ],
     backgroundMotifs: [
-      "large mountain or hill blocks",
-      "2–3 oversized leaf or bloom shapes",
-      "a simple ground/sky split",
+      "a barn, shed, fence, or garden gate",
+      "a watering can, planter, or hay bale when farm/garden-like",
+      "large mountain, tree, or bloom shapes that belong to the scene",
     ],
   },
   {
@@ -187,9 +378,9 @@ export const THEME_RULES: ThemeRule[] = [
       "kitchen",
     ],
     backgroundMotifs: [
-      "a large window or doorway silhouette",
-      "one oversized plant shape",
-      "a simple shelf or ground band",
+      "a window, doorway, or mantel",
+      "one oversized plant, mug, or book stack",
+      "a simple shelf or table edge — real home objects, not abstract shapes",
     ],
   },
   {
@@ -206,9 +397,9 @@ export const THEME_RULES: ThemeRule[] = [
       "tree ornament",
     ],
     backgroundMotifs: [
-      "2–4 oversized holiday icons max",
-      "a simple snowbank or ground band",
-      "one large moon or sun",
+      "2–3 oversized holiday props (gift, pumpkin, stocking, egg)",
+      "a cottage, tree, or fence that fits the holiday",
+      "a simple ground or snowbank band",
     ],
   },
   {
@@ -224,9 +415,9 @@ export const THEME_RULES: ThemeRule[] = [
       "bus",
     ],
     backgroundMotifs: [
-      "a simple road or track band",
-      "2–3 large cloud or hill shapes",
-      "one oversized sun",
+      "a road, track, or runway band",
+      "a garage, barn, station, or hangar silhouette",
+      "one related roadside/trackside prop (sign, silo, water tower)",
     ],
   },
   {
@@ -242,8 +433,8 @@ export const THEME_RULES: ThemeRule[] = [
       "couple",
     ],
     backgroundMotifs: [
-      "a simple solid field or gentle horizon",
-      "one oversized plant or window shape",
+      "one prop from their setting (swing, desk, garden gate, window)",
+      "a simple plant or doorway",
       "avoid crowded scenery behind faces",
     ],
   },
@@ -251,9 +442,9 @@ export const THEME_RULES: ThemeRule[] = [
     family: "abstract",
     keywords: [],
     backgroundMotifs: [
-      "a simple two-tone horizon",
-      "one large geometric disk or arc",
-      "2–3 oversized abstract blocks behind the subject",
+      "1–3 concrete props invented from the subject’s real-world setting",
+      "habitat objects, tools, shelters, or scenery items that belong with the subject",
+      "never abstract circles, arcs, disks, blobs, or unrelated geometric blocks",
     ],
   },
 ];
@@ -269,10 +460,30 @@ export function detectThemeFamily(subject: string): ThemeFamily {
   return "abstract";
 }
 
+/**
+ * Background props for themed mode: prefer subject-specific concrete objects
+ * (cow → barn / tractor / hay), then theme-family defaults. Never abstract filler.
+ */
 export function backgroundMotifsForSubject(subject: string): string[] {
+  for (const hint of SUBJECT_BACKGROUND_HINTS) {
+    if (hint.match.test(subject)) {
+      return [...hint.motifs];
+    }
+  }
+
   const family = detectThemeFamily(subject);
   const rule =
     THEME_RULES.find((item) => item.family === family) ??
     THEME_RULES[THEME_RULES.length - 1];
+
+  if (family === "abstract") {
+    const trimmed = subject.trim() || "the subject";
+    return [
+      `Invent 1–3 large concrete props that naturally belong with "${trimmed}" (shelter, tools, habitat objects, or related scenery)`,
+      "Props must be recognizable real-world things from that subject’s world",
+      "Forbidden behind the subject: abstract circles, arcs, disks, blobs, random geometric blocks, or decorative filler with no thematic link",
+    ];
+  }
+
   return [...rule.backgroundMotifs];
 }
