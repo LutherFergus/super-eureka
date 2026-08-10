@@ -5,12 +5,14 @@ import { useEffect, useId, useRef, useState } from "react";
 type PromptModalProps = {
   open: boolean;
   initialPrompt: string;
+  imageCount?: number;
   onClose: () => void;
 };
 
 export function PromptModal({
   open,
   initialPrompt,
+  imageCount = 1,
   onClose,
 }: PromptModalProps) {
   const titleId = useId();
@@ -69,6 +71,9 @@ export function PromptModal({
         <h2 id={titleId}>Assembled prompt</h2>
         <p className="prompt-modal-copy">
           Edit freely, then copy into Imagine or any image model.
+          {imageCount > 1
+            ? ` Generate ${imageCount} images with this prompt.`
+            : " Generate 1 image with this prompt."}
         </p>
 
         <div className="field">
