@@ -5,22 +5,27 @@ import { fileToResizedDataUrl } from "@/lib/gallery";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
   BORDER_MODE_OPTIONS,
+  BORDER_THICKNESS_MAX,
+  BORDER_THICKNESS_MIN,
   COLOR_COUNT_OPTIONS,
   CORNER_STYLE_OPTIONS,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
   DEFAULT_BORDER_MODE,
+  DEFAULT_BORDER_THICKNESS,
   DEFAULT_COLOR_COUNT,
   DEFAULT_CORNER_STYLE,
   DEFAULT_DETAIL_LEVEL,
   DEFAULT_ORIENTATION,
   ORIENTATION_OPTIONS,
   PROPORTION_OPTIONS,
+  clampBorderThickness,
   defaultAspectForOrientation,
   orientationForAspect,
   type AspectRatio,
   type BackgroundMode,
   type BorderMode,
+  type BorderThickness,
   type ColorCount,
   type CornerStyle,
   type DetailLevel,
@@ -74,6 +79,7 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const promptId = useId();
   const colorId = useId();
   const photoId = useId();
+  const thicknessId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [prompt, setPrompt] = useState("");
@@ -87,6 +93,9 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const [borderMode, setBorderMode] = useState<BorderMode>(DEFAULT_BORDER_MODE);
   const [cornerStyle, setCornerStyle] = useState<CornerStyle>(
     DEFAULT_CORNER_STYLE,
+  );
+  const [borderThickness, setBorderThickness] = useState<BorderThickness>(
+    DEFAULT_BORDER_THICKNESS,
   );
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(
     DEFAULT_BACKGROUND_MODE,
@@ -138,6 +147,7 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
     detailLevel,
     borderMode,
     cornerStyle: resolvedCornerStyle,
+    borderThickness,
     backgroundMode,
     hasReferenceImage: Boolean(photoDataUrl),
   });
@@ -168,6 +178,7 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
       detailLevel,
       borderMode,
       cornerStyle: resolvedCornerStyle,
+      borderThickness,
       backgroundMode,
       imageDataUrl: photoDataUrl,
     });
@@ -253,6 +264,34 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
           disabled={busy}
           onChange={setCornerStyle}
         />
+      ) : null}
+
+      {borderMode !== "none" ? (
+        <div className="field">
+          <div className="field-label-row">
+            <label htmlFor={thicknessId}>Thickness</label>
+            <span className="field-value" aria-live="polite">
+              {borderThickness}%
+            </span>
+          </div>
+          <input
+            id={thicknessId}
+            className="thickness-slider"
+            type="range"
+            min={BORDER_THICKNESS_MIN}
+            max={BORDER_THICKNESS_MAX}
+            step={1}
+            value={borderThickness}
+            disabled={busy}
+            onChange={(event) =>
+              setBorderThickness(clampBorderThickness(event.target.valueAsNumber))
+            }
+          />
+          <div className="thickness-ends" aria-hidden="true">
+            <span>1%</span>
+            <span>5%</span>
+          </div>
+        </div>
       ) : null}
 
       <div className="field">

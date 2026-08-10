@@ -3,6 +3,7 @@ import type {
   AspectRatio,
   BackgroundMode,
   BorderMode,
+  BorderThickness,
   ColorCount,
   CornerStyle,
   DetailLevel,
@@ -15,6 +16,7 @@ export type PromptBuildInput = {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
   hasReferenceImage: boolean;
 };
@@ -61,13 +63,19 @@ function detailInstruction(detailLevel: DetailLevel): string {
   ].join(" ");
 }
 
-function thicknessMatchRule(): string {
-  return "Thickness rule: the top border band and the bottom border band must match each other in thickness exactly. Left and right sides should feel balanced with that same visual weight.";
+function thicknessMatchRule(pct: BorderThickness): string {
+  const examplePx = pct * 20;
+  return [
+    `Border thickness target: roughly ${pct}% of the canvas width.`,
+    `Example: on a 2000px-wide canvas, border thickness ≈ ${examplePx}px (about ${pct}%).`,
+    "Thickness rule: the top border band and the bottom border band must match each other in thickness exactly. Left and right sides should feel balanced with that same visual weight.",
+  ].join(" ");
 }
 
 function borderInstruction(
   borderMode: BorderMode,
   cornerStyle: CornerStyle,
+  borderThickness: BorderThickness,
 ): string {
   if (borderMode === "none") {
     return [
@@ -80,6 +88,7 @@ function borderInstruction(
     "Border motifs must stay stitch-readable: large chunky shapes only.",
     "Forbidden: dense mini-icons, tiny repeats, filigree, or dozens of small ornaments.",
   ].join(" ");
+  const thickness = thicknessMatchRule(borderThickness);
 
   if (borderMode === "tiled") {
     return [
@@ -87,7 +96,7 @@ function borderInstruction(
       "Wrap the artwork in a continuous tiled border band made of a few LARGE repeating tile blocks.",
       "Tiles should be big and simple (think oversized squares, diamonds, or block motifs) — not a tiny mosaic grid.",
       "Keep tile count modest so each tile remains chartable in yarn.",
-      thicknessMatchRule(),
+      thickness,
       "Top and bottom tiled bands must be the same thickness.",
       stitchSafe,
     ].join(" ");
@@ -97,10 +106,10 @@ function borderInstruction(
   if (cornerStyle === "thin") {
     return [
       "Border: CORNERS — THIN.",
-      "Add only thin corner accents and/or a slender frame line.",
-      "Keep ornament minimal and clean. No heavy bands.",
-      thicknessMatchRule(),
-      "If any top/bottom edge treatment appears, top and bottom must match in thinness.",
+      "Add light corner accents and/or a slender frame line at the target thickness.",
+      "Keep ornament minimal and clean — line-like, not heavy filled blocks.",
+      thickness,
+      "Top and bottom edge treatments must match at that thickness.",
       stitchSafe,
     ].join(" ");
   }
@@ -108,11 +117,10 @@ function borderInstruction(
   if (cornerStyle === "thick") {
     return [
       "Border: CORNERS — THICK.",
-      "Add a strong corner/frame treatment where the border band thickness is roughly 5% of the canvas width.",
-      "Example: on a 2000px-wide canvas, border thickness ≈ 100px (about 5%).",
-      "Use solid chunky corner blocks or a thick frame — still simple and flat.",
-      thicknessMatchRule(),
-      "Top and bottom thick borders must match at that ~5% thickness.",
+      "Add a strong corner/frame treatment as a solid chunky band at the target thickness.",
+      "Use solid corner blocks or a bold frame — still simple and flat.",
+      thickness,
+      "Top and bottom thick borders must match at that thickness.",
       stitchSafe,
     ].join(" ");
   }
@@ -120,9 +128,9 @@ function borderInstruction(
   return [
     "Border: CORNERS — ARTISTIC.",
     "Create an artistic but SIMPLE corner border: elegant, hand-designed feeling, still easy to chart.",
-    "Allowed: gentle waves, curved corner flourishes, or varied thin/thick artistic strokes — as long as shapes stay large and few.",
+    "Allowed: gentle waves, curved corner flourishes, or varied artistic strokes — as long as shapes stay large and few.",
     "Keep it simple: decorative, not busy. No dense lace, no tiny repeats.",
-    thicknessMatchRule(),
+    thickness,
     "Whatever thickness you choose for the top edge must match the bottom edge exactly.",
     stitchSafe,
   ].join(" ");
@@ -162,6 +170,7 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     detailLevel: input.detailLevel,
     borderMode: input.borderMode,
     cornerStyle: input.cornerStyle,
+    borderThickness: input.borderThickness,
     backgroundMode: input.backgroundMode,
     hasReferenceImage: input.hasReferenceImage,
   });
@@ -187,7 +196,11 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     ...evaluation.directives,
     colorLock,
     detailInstruction(input.detailLevel),
-    borderInstruction(input.borderMode, input.cornerStyle),
+    borderInstruction(
+      input.borderMode,
+      input.cornerStyle,
+      input.borderThickness,
+    ),
     backgroundInstruction(input.backgroundMode, evaluation.backgroundMotifs),
     referenceLine,
     "Deliver one cohesive finished illustration that a crocheter could chart into a blanket without losing the idea.",
@@ -204,6 +217,7 @@ export function getDesignNotes(input: PromptBuildInput) {
     detailLevel: input.detailLevel,
     borderMode: input.borderMode,
     cornerStyle: input.cornerStyle,
+    borderThickness: input.borderThickness,
     backgroundMode: input.backgroundMode,
     hasReferenceImage: input.hasReferenceImage,
   });

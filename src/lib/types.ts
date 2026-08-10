@@ -19,6 +19,9 @@ export type BorderMode = "none" | "tiled" | "corners";
 
 export type CornerStyle = "thin" | "thick" | "artistic";
 
+/** Border band thickness as percent of canvas width (1–5%). */
+export type BorderThickness = 1 | 2 | 3 | 4 | 5;
+
 export type BackgroundMode = "none" | "themed";
 
 export interface GenerateOptions {
@@ -28,6 +31,7 @@ export interface GenerateOptions {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
   imageDataUrl?: string;
 }
@@ -41,6 +45,7 @@ export interface GenerateResponse {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
 }
 
@@ -52,6 +57,7 @@ export interface GalleryItem {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
   imageDataUrl: string;
   createdAt: string;
@@ -67,7 +73,19 @@ export const DEFAULT_ASPECT_RATIO: AspectRatio = "3:4";
 export const DEFAULT_DETAIL_LEVEL: DetailLevel = "simple";
 export const DEFAULT_BORDER_MODE: BorderMode = "none";
 export const DEFAULT_CORNER_STYLE: CornerStyle = "thin";
+export const DEFAULT_BORDER_THICKNESS: BorderThickness = 3;
+export const BORDER_THICKNESS_MIN = 1;
+export const BORDER_THICKNESS_MAX = 5;
 export const DEFAULT_BACKGROUND_MODE: BackgroundMode = "none";
+
+export function clampBorderThickness(value: unknown): BorderThickness {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return DEFAULT_BORDER_THICKNESS;
+  const rounded = Math.round(n);
+  if (rounded < BORDER_THICKNESS_MIN) return BORDER_THICKNESS_MIN;
+  if (rounded > BORDER_THICKNESS_MAX) return BORDER_THICKNESS_MAX;
+  return rounded as BorderThickness;
+}
 
 export const ASPECT_RATIO_OPTIONS: AspectRatio[] = [
   "1:1",

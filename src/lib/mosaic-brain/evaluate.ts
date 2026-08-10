@@ -9,6 +9,7 @@ import type {
   AspectRatio,
   BackgroundMode,
   BorderMode,
+  BorderThickness,
   ColorCount,
   CornerStyle,
   DetailLevel,
@@ -21,6 +22,7 @@ export type DesignEvaluationInput = {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
   hasReferenceImage: boolean;
 };
@@ -130,27 +132,32 @@ export function evaluateMosaicDesign(
 
   if (input.borderMode === "tiled") {
     notes.push(
-      "Tiled borders use a few large repeating blocks — not tiny tile grids.",
+      `Tiled borders use a few large repeating blocks at ~${input.borderThickness}% thickness — not tiny tile grids.`,
     );
     directives.push(
-      "Tiled border: large stitch-safe tiles only. Top and bottom border thickness must match.",
+      `Tiled border: large stitch-safe tiles only. Border thickness ≈ ${input.borderThickness}% of canvas width. Top and bottom must match.`,
     );
   } else if (input.borderMode === "corners") {
     if (input.cornerStyle === "thin") {
-      notes.push("Thin corners: slender accents, matching top/bottom weight.");
-    } else if (input.cornerStyle === "thick") {
       notes.push(
-        "Thick corners: about 5% of canvas width, top and bottom matched.",
+        `Thin corners: slender accents at ~${input.borderThickness}% thickness, matching top/bottom weight.`,
       );
       directives.push(
-        "Thick corner border thickness ≈ 5% of canvas width; top equals bottom.",
+        `Thin corner border thickness ≈ ${input.borderThickness}% of canvas width; top equals bottom.`,
+      );
+    } else if (input.cornerStyle === "thick") {
+      notes.push(
+        `Thick corners: about ${input.borderThickness}% of canvas width, top and bottom matched.`,
+      );
+      directives.push(
+        `Thick corner border thickness ≈ ${input.borderThickness}% of canvas width; top equals bottom.`,
       );
     } else {
       notes.push(
-        "Artistic corners stay simple — wavy/decorative is fine if shapes stay large.",
+        `Artistic corners stay simple at ~${input.borderThickness}% thickness — wavy/decorative is fine if shapes stay large.`,
       );
       directives.push(
-        "Artistic corners: simple decorative forms only; top/bottom thickness must match.",
+        `Artistic corners: simple decorative forms only; thickness ≈ ${input.borderThickness}% of canvas width; top/bottom must match.`,
       );
     }
   }

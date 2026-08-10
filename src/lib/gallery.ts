@@ -2,13 +2,16 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_BACKGROUND_MODE,
   DEFAULT_BORDER_MODE,
+  DEFAULT_BORDER_THICKNESS,
   DEFAULT_CORNER_STYLE,
   DEFAULT_DETAIL_LEVEL,
   GALLERY_MAX_ITEMS,
   GALLERY_STORAGE_KEY,
+  clampBorderThickness,
   type AspectRatio,
   type BackgroundMode,
   type BorderMode,
+  type BorderThickness,
   type ColorCount,
   type CornerStyle,
   type DetailLevel,
@@ -47,6 +50,7 @@ function normalizeGalleryItem(item: Partial<GalleryItem> & {
   imageDataUrl?: string;
   createdAt?: string;
   borderComplexity?: unknown;
+  borderThickness?: unknown;
 }): GalleryItem | null {
   if (
     !item.id ||
@@ -66,6 +70,9 @@ function normalizeGalleryItem(item: Partial<GalleryItem> & {
     detailLevel: (item.detailLevel as DetailLevel) || DEFAULT_DETAIL_LEVEL,
     borderMode: migrateBorderMode(item.borderMode),
     cornerStyle: migrateCornerStyle(item),
+    borderThickness: clampBorderThickness(
+      item.borderThickness ?? DEFAULT_BORDER_THICKNESS,
+    ),
     backgroundMode:
       (item.backgroundMode as BackgroundMode) || DEFAULT_BACKGROUND_MODE,
     imageDataUrl: item.imageDataUrl,
@@ -216,6 +223,7 @@ export async function addToGallery(input: {
   detailLevel: DetailLevel;
   borderMode: BorderMode;
   cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
   backgroundMode: BackgroundMode;
   imageDataUrl: string;
 }): Promise<GalleryItem[]> {
@@ -230,6 +238,7 @@ export async function addToGallery(input: {
     detailLevel: input.detailLevel,
     borderMode: input.borderMode,
     cornerStyle: input.cornerStyle,
+    borderThickness: clampBorderThickness(input.borderThickness),
     backgroundMode: input.backgroundMode,
     imageDataUrl: input.imageDataUrl,
     createdAt: new Date().toISOString(),
