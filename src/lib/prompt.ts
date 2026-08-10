@@ -12,6 +12,8 @@ import type {
 export type PromptBuildInput = {
   userPrompt: string;
   colorCount: ColorCount;
+  /** Named yarn colors — length should match colorCount. */
+  palette?: { name: string; hex: string }[];
   aspectRatio: AspectRatio;
   detailLevel: DetailLevel;
   borderMode: BorderMode;
@@ -21,7 +23,10 @@ export type PromptBuildInput = {
   hasReferenceImage: boolean;
 };
 
-function colorInstruction(colorCount: ColorCount): string {
+function colorInstruction(
+  colorCount: ColorCount,
+  palette?: { name: string; hex: string }[],
+): string {
   const hardCap = [
     `HARD COLOR CAP: the finished image may use exactly ${colorCount} solid flat colors — no more and no less in practice than ${colorCount} distinct RGB fills.`,
     "Count every region: subject, outlines, eyes, belly, cheeks, border, background, and ornaments.",
@@ -29,6 +34,24 @@ function colorInstruction(colorCount: ColorCount): string {
     "If a shape needs separation, flip between the allowed colors or use negative space from those same colors — never invent another color.",
     "Anti-aliased edge greys count as illegal extra colors — keep edges hard and fills perfectly flat.",
   ].join(" ");
+
+  const named =
+    palette && palette.length === colorCount
+      ? [
+          `Palette: EXACTLY these ${colorCount} yarn colors — use only them, matched as closely as flat fills allow:`,
+          palette
+            .map(
+              (color, index) =>
+                `Color ${index + 1}: ${color.name} (${color.hex})`,
+            )
+            .join("; ") + ".",
+          "Do not invent extra colors outside this named set.",
+        ].join(" ")
+      : null;
+
+  if (named) {
+    return [named, hardCap].join(" ");
+  }
 
   if (colorCount === 2) {
     return [
@@ -179,7 +202,7 @@ export function buildMosaicPrompt(input: PromptBuildInput): string {
     ? "Reference image provided: use it only for subject identity, pose, and silhouette. Redraw as crisp vector art — not a photo, not a filtered photo. Simplify small photo details into large flat shapes."
     : "No reference image. Invent an original illustration from the subject words.";
 
-  const colorLock = colorInstruction(input.colorCount);
+  const colorLock = colorInstruction(input.colorCount, input.palette);
 
   return [
     "You are generating finished artwork for Mosaic Image Creator.",
