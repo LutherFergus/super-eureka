@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { MosaicMark } from "@/components/MosaicMark";
+import { PromptModal } from "@/components/PromptModal";
 import { fileToResizedDataUrl } from "@/lib/gallery";
 import { buildMosaicPrompt } from "@/lib/prompt";
 import {
@@ -30,14 +31,14 @@ import {
   type ColorCount,
   type CornerStyle,
   type DetailLevel,
-  type GenerateOptions,
   type Orientation,
 } from "@/lib/types";
-
-type CreatorFormProps = {
-  busy: boolean;
-  onGenerate: (input: GenerateOptions) => Promise<void>;
-};
+import {
+  DEFAULT_COLOR_IDS,
+  YARN_COLORS,
+  resolveYarnColor,
+  resizePaletteIds,
+} from "@/lib/yarnColors";
 
 function OptionGroup<T extends string>({
   label,
@@ -76,7 +77,7 @@ function OptionGroup<T extends string>({
   );
 }
 
-export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
+export function CreatorForm() {
   const promptId = useId();
   const colorId = useId();
   const photoId = useId();
@@ -85,6 +86,9 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
 
   const [prompt, setPrompt] = useState("");
   const [colorCount, setColorCount] = useState<ColorCount>(DEFAULT_COLOR_COUNT);
+  const [paletteIds, setPaletteIds] = useState<string[]>(
+    () => DEFAULT_COLOR_IDS[DEFAULT_COLOR_COUNT],
+  );
   const [orientation, setOrientation] =
     useState<Orientation>(DEFAULT_ORIENTATION);
   const [aspectRatio, setAspectRatio] =
@@ -104,8 +108,8 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
   const [localError, setLocalError] = useState<string | null>(null);
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalPrompt, setModalPrompt] = useState("");
 
   useEffect(() => {
     const allowed = PROPORTION_OPTIONS[orientation].map((item) => item.value);
@@ -113,6 +117,10 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
       setAspectRatio(defaultAspectForOrientation(orientation));
     }
   }, [orientation, aspectRatio]);
+
+  useEffect(() => {
+    setPaletteIds((current) => resizePaletteIds(current, colorCount));
+  }, [colorCount]);
 
   async function handlePhotoChange(file: File | undefined) {
     setLocalError(null);
@@ -141,29 +149,27 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
   const resolvedCornerStyle =
     borderMode === "corners" ? cornerStyle : DEFAULT_CORNER_STYLE;
 
-  const assembledPrompt = buildMosaicPrompt({
-    userPrompt: prompt.trim() || "subject",
-    colorCount,
-    aspectRatio,
-    detailLevel,
-    borderMode,
-    cornerStyle: resolvedCornerStyle,
-    borderThickness,
-    backgroundMode,
-    hasReferenceImage: Boolean(photoDataUrl),
+  const palette = paletteIds.slice(0, colorCount).map((id) => {
+    const color = resolveYarnColor(id);
+    return { name: color.name, hex: color.hex };
   });
 
-  async function handleCopyPrompt() {
-    try {
-      await navigator.clipboard.writeText(assembledPrompt);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setLocalError("Could not copy the prompt.");
-    }
+  function assemblePrompt(subject: string) {
+    return buildMosaicPrompt({
+      userPrompt: subject,
+      colorCount,
+      palette,
+      aspectRatio,
+      detailLevel,
+      borderMode,
+      cornerStyle: resolvedCornerStyle,
+      borderThickness,
+      backgroundMode,
+      hasReferenceImage: Boolean(photoDataUrl),
+    });
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError(null);
     const trimmed = prompt.trim();
@@ -172,221 +178,216 @@ export function CreatorForm({ busy, onGenerate }: CreatorFormProps) {
       return;
     }
 
-    await onGenerate({
-      prompt: trimmed,
-      colorCount,
-      aspectRatio,
-      detailLevel,
-      borderMode,
-      cornerStyle: resolvedCornerStyle,
-      borderThickness,
-      backgroundMode,
-      imageDataUrl: photoDataUrl,
-    });
+    setModalPrompt(assemblePrompt(trimmed));
+    setModalOpen(true);
   }
 
   return (
-    <form className="creator-form" onSubmit={handleSubmit}>
-      <div className="studio-brand">
-        <MosaicMark className="studio-brand-mark" />
-        <span>Mosaic</span>
-      </div>
+    <>
+      <form className="creator-form" onSubmit={handleSubmit}>
+        <div className="studio-brand">
+          <MosaicMark className="studio-brand-mark" />
+          <span>Mosaic</span>
+        </div>
 
-      <div className="field">
-        <label htmlFor={promptId}>Subject</label>
-        <textarea
-          id={promptId}
-          name="prompt"
-          rows={2}
-          maxLength={1200}
-          placeholder="sleepy fox"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          disabled={busy}
-          required
-        />
-      </div>
-
-      <OptionGroup
-        label="Orientation"
-        value={orientation}
-        options={ORIENTATION_OPTIONS}
-        disabled={busy}
-        onChange={(next) => {
-          setOrientation(next);
-          setAspectRatio(defaultAspectForOrientation(next));
-        }}
-      />
-
-      <OptionGroup
-        label="Proportion"
-        value={aspectRatio}
-        options={PROPORTION_OPTIONS[orientation]}
-        disabled={busy}
-        onChange={(next) => {
-          setAspectRatio(next);
-          setOrientation(orientationForAspect(next));
-        }}
-      />
-
-      <div className="field-row">
-        <OptionGroup
-          label="Detail"
-          value={detailLevel}
-          options={[
-            { value: "simple", label: "Simple" },
-            { value: "detailed", label: "Detailed" },
-          ]}
-          disabled={busy}
-          onChange={setDetailLevel}
-        />
-        <OptionGroup
-          label="Background"
-          value={backgroundMode}
-          options={[
-            { value: "none", label: "None" },
-            { value: "themed", label: "Themed" },
-          ]}
-          disabled={busy}
-          onChange={setBackgroundMode}
-        />
-      </div>
-
-      <OptionGroup
-        label="Border"
-        value={borderMode}
-        options={BORDER_MODE_OPTIONS}
-        disabled={busy}
-        onChange={setBorderMode}
-      />
-
-      {borderMode === "corners" ? (
-        <OptionGroup
-          label="Corners"
-          value={cornerStyle}
-          options={CORNER_STYLE_OPTIONS}
-          disabled={busy}
-          onChange={setCornerStyle}
-        />
-      ) : null}
-
-      {borderMode !== "none" ? (
         <div className="field">
-          <div className="field-label-row">
-            <label htmlFor={thicknessId}>Thickness</label>
-            <span className="field-value" aria-live="polite">
-              {borderThickness}%
-            </span>
-          </div>
-          <input
-            id={thicknessId}
-            className="thickness-slider"
-            type="range"
-            min={BORDER_THICKNESS_MIN}
-            max={BORDER_THICKNESS_MAX}
-            step={1}
-            value={borderThickness}
-            disabled={busy}
-            onChange={(event) =>
-              setBorderThickness(clampBorderThickness(event.target.valueAsNumber))
-            }
+          <label htmlFor={promptId}>Subject</label>
+          <textarea
+            id={promptId}
+            name="prompt"
+            rows={2}
+            maxLength={1200}
+            placeholder="sleepy fox"
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            required
           />
-          <div className="thickness-ends" aria-hidden="true">
-            <span>1%</span>
-            <span>5%</span>
-          </div>
         </div>
-      ) : null}
 
-      <div className="field">
-        <label id={colorId}>Colors</label>
-        <div className="color-pills" role="group" aria-labelledby={colorId}>
-          {COLOR_COUNT_OPTIONS.map((count) => (
-            <button
-              key={count}
-              type="button"
-              className={
-                count === colorCount ? "color-pill is-active" : "color-pill"
+        <OptionGroup
+          label="Orientation"
+          value={orientation}
+          options={ORIENTATION_OPTIONS}
+          onChange={(next) => {
+            setOrientation(next);
+            setAspectRatio(defaultAspectForOrientation(next));
+          }}
+        />
+
+        <OptionGroup
+          label="Proportion"
+          value={aspectRatio}
+          options={PROPORTION_OPTIONS[orientation]}
+          onChange={(next) => {
+            setAspectRatio(next);
+            setOrientation(orientationForAspect(next));
+          }}
+        />
+
+        <div className="field-row">
+          <OptionGroup
+            label="Detail"
+            value={detailLevel}
+            options={[
+              { value: "simple", label: "Simple" },
+              { value: "detailed", label: "Detailed" },
+            ]}
+            onChange={setDetailLevel}
+          />
+          <OptionGroup
+            label="Background"
+            value={backgroundMode}
+            options={[
+              { value: "none", label: "None" },
+              { value: "themed", label: "Themed" },
+            ]}
+            onChange={setBackgroundMode}
+          />
+        </div>
+
+        <OptionGroup
+          label="Border"
+          value={borderMode}
+          options={BORDER_MODE_OPTIONS}
+          onChange={setBorderMode}
+        />
+
+        {borderMode === "corners" ? (
+          <OptionGroup
+            label="Corners"
+            value={cornerStyle}
+            options={CORNER_STYLE_OPTIONS}
+            onChange={setCornerStyle}
+          />
+        ) : null}
+
+        {borderMode !== "none" ? (
+          <div className="field">
+            <div className="field-label-row">
+              <label htmlFor={thicknessId}>Thickness</label>
+              <span className="field-value" aria-live="polite">
+                {borderThickness}%
+              </span>
+            </div>
+            <input
+              id={thicknessId}
+              className="thickness-slider"
+              type="range"
+              min={BORDER_THICKNESS_MIN}
+              max={BORDER_THICKNESS_MAX}
+              step={1}
+              value={borderThickness}
+              onChange={(event) =>
+                setBorderThickness(
+                  clampBorderThickness(event.target.valueAsNumber),
+                )
               }
-              onClick={() => setColorCount(count)}
-              disabled={busy}
-              aria-pressed={count === colorCount}
-            >
-              {count}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="field">
-        <label htmlFor={photoId}>Photo</label>
-        <div className="photo-row">
-          <input
-            ref={fileRef}
-            id={photoId}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            disabled={busy}
-            onChange={(event) =>
-              void handlePhotoChange(event.target.files?.[0])
-            }
-          />
-          {photoName ? (
-            <button
-              type="button"
-              className="text-btn"
-              disabled={busy}
-              onClick={() => {
-                if (fileRef.current) fileRef.current.value = "";
-                void handlePhotoChange(undefined);
-              }}
-            >
-              Clear
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {localError ? <p className="form-error">{localError}</p> : null}
-
-      <div className="form-actions">
-        <button className="primary-btn" type="submit" disabled={busy}>
-          {busy ? "Creating…" : "Create"}
-        </button>
-        <button
-          className="ghost-on-light"
-          type="button"
-          disabled={busy}
-          aria-expanded={showPrompt}
-          onClick={() => setShowPrompt((open) => !open)}
-        >
-          {showPrompt ? "Hide prompt" : "Show prompt"}
-        </button>
-        <button
-          className="ghost-on-light"
-          type="button"
-          disabled={busy}
-          onClick={() => void handleCopyPrompt()}
-        >
-          {copied ? "Copied" : "Copy prompt"}
-        </button>
-      </div>
-
-      {showPrompt ? (
-        <div className="prompt-preview">
-          <div className="prompt-preview-head">
-            <p className="prompt-preview-title">Assembled prompt</p>
-            <button
-              type="button"
-              className="text-btn"
-              onClick={() => void handleCopyPrompt()}
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
+            />
+            <div className="thickness-ends" aria-hidden="true">
+              <span>1%</span>
+              <span>5%</span>
+            </div>
           </div>
-          <pre className="prompt-preview-body">{assembledPrompt}</pre>
+        ) : null}
+
+        <div className="field">
+          <label id={colorId}>Colors</label>
+          <div className="color-pills" role="group" aria-labelledby={colorId}>
+            {COLOR_COUNT_OPTIONS.map((count) => (
+              <button
+                key={count}
+                type="button"
+                className={
+                  count === colorCount ? "color-pill is-active" : "color-pill"
+                }
+                onClick={() => setColorCount(count)}
+                aria-pressed={count === colorCount}
+              >
+                {count}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : null}
-    </form>
+
+        <div className="palette-fields" role="group" aria-label="Color names">
+          {paletteIds.slice(0, colorCount).map((id, index) => {
+            const selectId = `palette-color-${index + 1}`;
+            const selected = resolveYarnColor(id);
+            return (
+              <div className="field palette-field" key={selectId}>
+                <label htmlFor={selectId}>Color {index + 1}</label>
+                <div className="palette-select-row">
+                  <span
+                    className="palette-swatch"
+                    style={{ background: selected.hex }}
+                    aria-hidden="true"
+                  />
+                  <select
+                    id={selectId}
+                    className="palette-select"
+                    value={id}
+                    onChange={(event) => {
+                      const nextId = event.target.value;
+                      setPaletteIds((current) => {
+                        const next = [...current];
+                        next[index] = nextId;
+                        return next;
+                      });
+                    }}
+                  >
+                    {YARN_COLORS.map((color) => (
+                      <option key={color.id} value={color.id}>
+                        {color.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="field">
+          <label htmlFor={photoId}>Photo</label>
+          <div className="photo-row">
+            <input
+              ref={fileRef}
+              id={photoId}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) =>
+                void handlePhotoChange(event.target.files?.[0])
+              }
+            />
+            {photoName ? (
+              <button
+                type="button"
+                className="text-btn"
+                onClick={() => {
+                  if (fileRef.current) fileRef.current.value = "";
+                  void handlePhotoChange(undefined);
+                }}
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {localError ? <p className="form-error">{localError}</p> : null}
+
+        <div className="form-actions">
+          <button className="primary-btn" type="submit">
+            Create
+          </button>
+        </div>
+      </form>
+
+      <PromptModal
+        open={modalOpen}
+        initialPrompt={modalPrompt}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
   );
 }
