@@ -23,8 +23,14 @@ const DB_VERSION = 1;
 const STORE_NAME = "gallery";
 
 function migrateBorderMode(raw: unknown): BorderMode {
-  if (raw === "tiled" || raw === "corners" || raw === "none") return raw;
-  if (raw === "border") return "corners";
+  if (
+    raw === "tiled" ||
+    raw === "corners" ||
+    raw === "none" ||
+    raw === "border"
+  ) {
+    return raw;
+  }
   return DEFAULT_BORDER_MODE;
 }
 
