@@ -46,6 +46,26 @@ import {
   resizePaletteIds,
 } from "@/lib/yarnColors";
 
+export type LocalGenerateRequest = {
+  prompt: string;
+  subject: string;
+  colorCount: ColorCount;
+  aspectRatio: AspectRatio;
+  detailLevel: DetailLevel;
+  blanketSize: BlanketSize;
+  borderMode: BorderMode;
+  cornerStyle: CornerStyle;
+  borderThickness: BorderThickness;
+  backgroundMode: BackgroundMode;
+  imageCount: ImageCount;
+};
+
+type CreatorFormProps = {
+  busy?: boolean;
+  onGenerateImages: (request: LocalGenerateRequest) => Promise<void>;
+  onOpenEndpoint: () => void;
+};
+
 function OptionGroup<T extends string | number>({
   label,
   value,
@@ -83,7 +103,11 @@ function OptionGroup<T extends string | number>({
   );
 }
 
-export function CreatorForm() {
+export function CreatorForm({
+  busy = false,
+  onGenerateImages,
+  onOpenEndpoint,
+}: CreatorFormProps) {
   const promptId = useId();
   const colorId = useId();
   const imagesId = useId();
@@ -118,6 +142,7 @@ export function CreatorForm() {
   const [modalPrompt, setModalPrompt] = useState("");
   const [modalImageCount, setModalImageCount] =
     useState<ImageCount>(DEFAULT_IMAGE_COUNT);
+  const [subjectForGenerate, setSubjectForGenerate] = useState("");
 
   useEffect(() => {
     const allowed = PROPORTION_OPTIONS[orientation].map((item) => item.value);
@@ -168,7 +193,25 @@ export function CreatorForm() {
 
     setModalPrompt(assemblePrompt(trimmed));
     setModalImageCount(imageCount);
+    setSubjectForGenerate(trimmed);
     setModalOpen(true);
+  }
+
+  async function handleGenerateFromModal(assembled: string) {
+    await onGenerateImages({
+      prompt: assembled,
+      subject: subjectForGenerate,
+      colorCount,
+      aspectRatio,
+      detailLevel,
+      blanketSize,
+      borderMode,
+      cornerStyle: resolvedCornerStyle,
+      borderThickness,
+      backgroundMode,
+      imageCount: modalImageCount,
+    });
+    setModalOpen(false);
   }
 
   return (
@@ -182,6 +225,13 @@ export function CreatorForm() {
               {APP_VERSION_LABEL}
             </span>
           </div>
+          <button
+            type="button"
+            className="text-btn sd-settings-btn"
+            onClick={onOpenEndpoint}
+          >
+            SD PC
+          </button>
         </div>
 
         <div className="field">
@@ -385,7 +435,12 @@ export function CreatorForm() {
         open={modalOpen}
         initialPrompt={modalPrompt}
         imageCount={modalImageCount}
-        onClose={() => setModalOpen(false)}
+        generating={busy}
+        onClose={() => {
+          if (!busy) setModalOpen(false);
+        }}
+        onGenerate={handleGenerateFromModal}
+        onOpenEndpoint={onOpenEndpoint}
       />
     </>
   );

@@ -6,14 +6,20 @@ type PromptModalProps = {
   open: boolean;
   initialPrompt: string;
   imageCount?: number;
+  generating?: boolean;
   onClose: () => void;
+  onGenerate?: (prompt: string) => void | Promise<void>;
+  onOpenEndpoint?: () => void;
 };
 
 export function PromptModal({
   open,
   initialPrompt,
   imageCount = 1,
+  generating = false,
   onClose,
+  onGenerate,
+  onOpenEndpoint,
 }: PromptModalProps) {
   const titleId = useId();
   const textareaId = useId();
@@ -37,11 +43,11 @@ export function PromptModal({
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !generating) onClose();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, generating]);
 
   if (!open) return null;
 
@@ -56,6 +62,21 @@ export function PromptModal({
     }
   }
 
+  async function handleGenerate() {
+    if (!onGenerate) return;
+    setError(null);
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      setError("Prompt is empty.");
+      return;
+    }
+    try {
+      await onGenerate(trimmed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed.");
+    }
+  }
+
   return (
     <div
       className="prompt-modal-overlay"
@@ -63,17 +84,15 @@ export function PromptModal({
       aria-modal="true"
       aria-labelledby={titleId}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget && !generating) onClose();
       }}
     >
       <div className="prompt-modal-panel">
         <p className="prompt-modal-eyebrow">Prompt</p>
         <h2 id={titleId}>Assembled prompt</h2>
         <p className="prompt-modal-copy">
-          Edit freely, then copy into Imagine or any image model.
-          {imageCount > 1
-            ? ` Generate ${imageCount} images with this prompt.`
-            : " Generate 1 image with this prompt."}
+          Edit freely, then generate on your PC’s Stable Diffusion
+          {imageCount > 1 ? ` (${imageCount} images)` : ""}, or copy the prompt.
         </p>
 
         <div className="field">
@@ -84,6 +103,7 @@ export function PromptModal({
             className="prompt-modal-textarea"
             rows={14}
             value={draft}
+            disabled={generating}
             onChange={(event) => setDraft(event.target.value)}
           />
         </div>
@@ -91,12 +111,38 @@ export function PromptModal({
         {error ? <p className="form-error">{error}</p> : null}
 
         <div className="prompt-modal-actions">
-          <button className="primary-btn" type="button" onClick={() => void handleCopy()}>
+          {onGenerate ? (
+            <button
+              className="primary-btn"
+              type="button"
+              disabled={generating}
+              onClick={() => void handleGenerate()}
+            >
+              {generating ? "Generating…" : "Generate on PC"}
+            </button>
+          ) : null}
+          <button
+            className="ghost-on-light"
+            type="button"
+            disabled={generating}
+            onClick={() => void handleCopy()}
+          >
             {copied ? "Copied" : "Copy"}
           </button>
+          {onOpenEndpoint ? (
+            <button
+              className="ghost-on-light"
+              type="button"
+              disabled={generating}
+              onClick={onOpenEndpoint}
+            >
+              SD settings
+            </button>
+          ) : null}
           <button
             className="secondary-btn ghost-on-light"
             type="button"
+            disabled={generating}
             onClick={onClose}
           >
             Close
