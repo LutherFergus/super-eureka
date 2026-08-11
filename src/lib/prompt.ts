@@ -178,6 +178,38 @@ function borderInstruction(
     ].join(" ");
   }
 
+  if (borderMode === "border") {
+    if (cornerStyle === "thin") {
+      return [
+        "Border: FULL BORDER — THIN.",
+        "Wrap the whole artwork in a continuous slender frame/band on all four sides at the target thickness.",
+        "Keep it a clean perimeter line or thin band — not corner-only accents, not tiled motif repeats.",
+        thickness,
+        "Top and bottom bands must match exactly; left and right should match that same visual weight.",
+        stitchSafe,
+      ].join(" ");
+    }
+    if (cornerStyle === "thick") {
+      return [
+        "Border: FULL BORDER — THICK.",
+        "Wrap the whole artwork in a continuous solid chunky frame/band on all four sides at the target thickness.",
+        "Use a bold filled perimeter band — not corner-only blocks, not tiled motif repeats.",
+        thickness,
+        "Top and bottom thick borders must match at that thickness.",
+        stitchSafe,
+      ].join(" ");
+    }
+    return [
+      "Border: FULL BORDER — ARTISTIC.",
+      "Wrap the whole artwork in a continuous artistic frame on all four sides at the target thickness.",
+      "Allowed: gentle waves, scallops, or simple decorative stroke variation along the perimeter — still a full border, not corner-only ornaments.",
+      "Keep it simple and chartable. No dense lace, no tiny repeats, no tiled icon strips.",
+      thickness,
+      "Top and bottom must match exactly.",
+      stitchSafe,
+    ].join(" ");
+  }
+
   // corners
   if (cornerStyle === "thin") {
     return [

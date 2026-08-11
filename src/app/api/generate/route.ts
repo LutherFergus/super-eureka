@@ -76,7 +76,12 @@ function isBlanketSize(value: unknown): value is BlanketSize {
 }
 
 function isBorderMode(value: unknown): value is BorderMode {
-  return value === "none" || value === "tiled" || value === "corners";
+  return (
+    value === "none" ||
+    value === "border" ||
+    value === "tiled" ||
+    value === "corners"
+  );
 }
 
 function isCornerStyle(value: unknown): value is CornerStyle {
@@ -161,7 +166,9 @@ export async function POST(request: Request) {
     }
 
     const resolvedCornerStyle =
-      borderMode === "corners" ? cornerStyle : DEFAULT_CORNER_STYLE;
+      borderMode === "corners" || borderMode === "border"
+        ? cornerStyle
+        : DEFAULT_CORNER_STYLE;
 
     const promptUsed = buildMosaicPrompt({
       userPrompt: prompt,

@@ -18,7 +18,7 @@ export type DetailLevel = "simple" | "detailed";
 /** Target blanket scale — gates how much stitch-scale detail the prompt allows. */
 export type BlanketSize = "small" | "large";
 
-export type BorderMode = "none" | "tiled" | "corners";
+export type BorderMode = "none" | "border" | "corners" | "tiled";
 
 export type CornerStyle = "thin" | "thick" | "artistic";
 
@@ -117,8 +117,9 @@ export const ASPECT_RATIO_OPTIONS: AspectRatio[] = [
 
 export const BORDER_MODE_OPTIONS: { value: BorderMode; label: string }[] = [
   { value: "none", label: "No border" },
-  { value: "tiled", label: "Tiled" },
+  { value: "border", label: "Border" },
   { value: "corners", label: "Corners" },
+  { value: "tiled", label: "Tiled" },
 ];
 
 export const CORNER_STYLE_OPTIONS: { value: CornerStyle; label: string }[] = [

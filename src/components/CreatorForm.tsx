@@ -131,7 +131,9 @@ export function CreatorForm() {
   }, [colorCount]);
 
   const resolvedCornerStyle =
-    borderMode === "corners" ? cornerStyle : DEFAULT_CORNER_STYLE;
+    borderMode === "corners" || borderMode === "border"
+      ? cornerStyle
+      : DEFAULT_CORNER_STYLE;
 
   const palette = paletteIds.slice(0, colorCount).map((id) => {
     const color = resolveYarnColor(id);
@@ -256,9 +258,9 @@ export function CreatorForm() {
           onChange={setBorderMode}
         />
 
-        {borderMode === "corners" ? (
+        {borderMode === "corners" || borderMode === "border" ? (
           <OptionGroup
-            label="Corners"
+            label={borderMode === "corners" ? "Corners" : "Style"}
             value={cornerStyle}
             options={CORNER_STYLE_OPTIONS}
             onChange={setCornerStyle}

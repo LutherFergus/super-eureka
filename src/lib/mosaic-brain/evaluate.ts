@@ -170,6 +170,13 @@ export function evaluateMosaicDesign(
     directives.push(
       `Tiled border: large stitch-safe tiles only. Border thickness ≈ ${input.borderThickness}% of canvas width. Top and bottom must match.`,
     );
+  } else if (input.borderMode === "border") {
+    notes.push(
+      `Full border (${input.cornerStyle}) at ~${input.borderThickness}% — continuous frame on all sides.`,
+    );
+    directives.push(
+      `FULL BORDER style=${input.cornerStyle}: continuous perimeter frame at ≈ ${input.borderThickness}% of canvas width; top equals bottom. Not corner-only, not tiled motifs.`,
+    );
   } else if (input.borderMode === "corners") {
     if (input.cornerStyle === "thin") {
       notes.push(
