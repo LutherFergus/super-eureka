@@ -1,0 +1,30 @@
+{
+  "name": "Mosaic Image Creator",
+  "short_name": "Mosaic",
+  "description": "Design clean vector mosaic blanket patterns from a text prompt and optional photo using Grok Imagine.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#eef3ef",
+  "theme_color": "#1f7a66",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
