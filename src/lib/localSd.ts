@@ -75,16 +75,38 @@ export function mixedContentBlockReason(baseUrl: string): string | null {
   return null;
 }
 
+const TEST_TIMEOUT_MS = 12_000;
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException &&
+      (error.name === "AbortError" || error.name === "TimeoutError")) ||
+    (error instanceof Error &&
+      (error.name === "AbortError" ||
+        error.name === "TimeoutError" ||
+        /aborted|timed?\s*out/i.test(error.message)))
+  );
+}
+
 function endpointErrorMessage(error: unknown, baseUrl: string): string {
   const mixed = mixedContentBlockReason(baseUrl);
   if (mixed) return mixed;
+
+  if (isAbortError(error)) {
+    return [
+      `Timed out after ${TEST_TIMEOUT_MS / 1000}s reaching ${baseUrl}.`,
+      "Open that same URL with Open WebUI — if the page does not load, Funnel/Serve or WebUI is not up.",
+      "If WebUI loads but Test hangs: add --cors-allow-origins=https://lutherfergus.github.io and restart.",
+      "Tailscale Serve only works from devices on your Tailnet; use Funnel for a normal phone browser.",
+    ].join(" ");
+  }
 
   if (error instanceof TypeError) {
     return [
       `Could not reach Stable Diffusion at ${baseUrl}.`,
       "Checklist: WebUI running in Stability Matrix; args include --api --listen;",
       "CORS includes https://lutherfergus.github.io;",
-      "phone on same Wi‑Fi OR use an https tunnel URL;",
+      "use Tailscale Funnel/Serve https URL (or Cloudflare Tunnel);",
       "Windows Firewall allows the WebUI port.",
     ].join(" ");
   }
@@ -93,10 +115,15 @@ function endpointErrorMessage(error: unknown, baseUrl: string): string {
 }
 
 async function probeApi(base: string, path: string): Promise<Response> {
+  const signal =
+    typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+      ? AbortSignal.timeout(TEST_TIMEOUT_MS)
+      : undefined;
   return fetch(`${base}${path}`, {
     method: "GET",
     mode: "cors",
     cache: "no-store",
+    signal,
   });
 }
 
