@@ -95,9 +95,10 @@ function endpointErrorMessage(error: unknown, baseUrl: string): string {
   if (isAbortError(error)) {
     return [
       `Timed out after ${TEST_TIMEOUT_MS / 1000}s reaching ${baseUrl}.`,
-      "Open that same URL with Open WebUI — if the page does not load, Funnel/Serve or WebUI is not up.",
-      "If WebUI loads but Test hangs: add --cors-allow-origins=https://lutherfergus.github.io and restart.",
-      "Tailscale Serve only works from devices on your Tailnet; use Funnel for a normal phone browser.",
+      "On this phone, tap Open API check — you should see JSON (a model list).",
+      "If that page also spins: Funnel is not public yet, or WebUI is not on that port. On the PC run: tailscale funnel status",
+      "Use Funnel (public), not Serve, unless this phone is logged into Tailscale.",
+      "If JSON loads but Test still fails: restart WebUI with --cors-allow-origins=https://lutherfergus.github.io",
     ].join(" ");
   }
 

@@ -38,7 +38,7 @@ export function SdEndpointGate({
     setStatus(null);
     setHint(
       typeof window !== "undefined" && window.location.protocol === "https:"
-        ? "This page is HTTPS. Test/Generate need an https:// WebUI URL (Tailscale Funnel/Serve or Cloudflare Tunnel), not plain http://192.168… from the phone."
+        ? "Timeout almost always means this phone cannot reach your Funnel URL. Prefer Funnel over Serve; confirm with Open API check."
         : null,
     );
     const timer = window.setTimeout(() => inputRef.current?.focus(), 40);
@@ -79,6 +79,20 @@ export function SdEndpointGate({
     }
   }
 
+  function handleOpenApiCheck() {
+    setError(null);
+    try {
+      const normalized = normalizeSdEndpoint(value);
+      window.open(
+        `${normalized}/sdapi/v1/sd-models`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid URL.");
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -101,13 +115,15 @@ export function SdEndpointGate({
         <p className="prompt-modal-eyebrow">Local PC</p>
         <h2 id="sd-endpoint-title">Stable Diffusion endpoint</h2>
         <p className="prompt-modal-copy">
-          In Stability Matrix, launch Automatic1111 or Forge with{" "}
+          WebUI launch args:{" "}
           <code>
             --api --listen --cors-allow-origins=https://lutherfergus.github.io
           </code>
-          . Mosaic is HTTPS, so paste an <code>https://…</code> URL (Tailscale
-          Funnel/Serve or Cloudflare Tunnel — plain{" "}
-          <code>http://192.168…</code> is blocked).
+          . Then on the PC: <code>tailscale funnel --bg 7860</code> and paste the{" "}
+          <code>https://….ts.net</code> URL it prints (not Serve, not{" "}
+          <code>http://100…</code>). If Test times out, use Open API check on
+          this phone — JSON means the tunnel works; a spinning tab means Funnel
+          is not reachable yet.
         </p>
 
         <div className="field">
@@ -124,9 +140,9 @@ export function SdEndpointGate({
             onChange={(event) => setValue(event.target.value)}
           />
           <p className="field-hint">
-            On the PC: <code>tailscale funnel --bg 7860</code> (or{" "}
-            <code>cloudflared tunnel --url http://127.0.0.1:7860</code>) then
-            paste the https URL.
+            PC check: <code>tailscale funnel status</code> should show a proxy
+            to port 7860. First-time Funnel needs HTTPS + Funnel enabled in the
+            Tailscale admin console.
           </p>
         </div>
 
@@ -153,6 +169,14 @@ export function SdEndpointGate({
             onClick={handleOpenWebUi}
           >
             Open WebUI
+          </button>
+          <button
+            className="ghost-on-light"
+            type="button"
+            disabled={busy || !value.trim()}
+            onClick={handleOpenApiCheck}
+          >
+            Open API check
           </button>
           <button
             className="ghost-on-light"
