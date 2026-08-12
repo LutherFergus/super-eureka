@@ -38,7 +38,7 @@ export function SdEndpointGate({
     setStatus(null);
     setHint(
       typeof window !== "undefined" && window.location.protocol === "https:"
-        ? "This page is HTTPS. Test/Generate need an https:// WebUI URL (Cloudflare Tunnel), not plain http://192.168… from the phone."
+        ? "This page is HTTPS. Test/Generate need an https:// WebUI URL (Tailscale Funnel/Serve or Cloudflare Tunnel), not plain http://192.168… from the phone."
         : null,
     );
     const timer = window.setTimeout(() => inputRef.current?.focus(), 40);
@@ -105,9 +105,9 @@ export function SdEndpointGate({
           <code>
             --api --listen --cors-allow-origins=https://lutherfergus.github.io
           </code>
-          . Because Mosaic is on HTTPS, use a Cloudflare Tunnel{" "}
-          <code>https://…</code> URL here (plain <code>http://192.168…</code>{" "}
-          is blocked by the phone browser).
+          . Mosaic is HTTPS, so paste an <code>https://…</code> URL (Tailscale
+          Funnel/Serve or Cloudflare Tunnel — plain{" "}
+          <code>http://192.168…</code> is blocked).
         </p>
 
         <div className="field">
@@ -119,14 +119,14 @@ export function SdEndpointGate({
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="https://your-tunnel.trycloudflare.com"
+            placeholder="https://your-pc.tailXXXX.ts.net"
             value={value}
             onChange={(event) => setValue(event.target.value)}
           />
           <p className="field-hint">
-            On the PC:{" "}
-            <code>cloudflared tunnel --url http://127.0.0.1:7860</code> then
-            paste the https URL it prints.
+            On the PC: <code>tailscale funnel --bg 7860</code> (or{" "}
+            <code>cloudflared tunnel --url http://127.0.0.1:7860</code>) then
+            paste the https URL.
           </p>
         </div>
 
