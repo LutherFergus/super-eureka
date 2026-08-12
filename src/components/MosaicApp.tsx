@@ -46,8 +46,9 @@ export function MosaicApp() {
   async function handleGenerateImages(request: LocalGenerateRequest) {
     const endpoint = sdEndpoint.trim() || loadSdEndpoint();
     if (!endpoint) {
+      setError("Set your PC Stable Diffusion URL first (SD PC).");
       setEndpointOpen(true);
-      throw new Error("Set your PC Stable Diffusion URL first (SD PC).");
+      return;
     }
 
     setBusy(true);
@@ -89,7 +90,6 @@ export function MosaicApp() {
       const message =
         err instanceof Error ? err.message : "Generation failed.";
       setError(message);
-      throw err;
     } finally {
       setBusy(false);
     }

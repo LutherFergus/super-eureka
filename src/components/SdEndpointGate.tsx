@@ -106,7 +106,7 @@ export function SdEndpointGate({
 
   return (
     <div
-      className="prompt-modal-overlay"
+      className="prompt-modal-overlay sd-endpoint-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sd-endpoint-title"

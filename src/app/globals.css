@@ -971,6 +971,10 @@ input[type="text"]:focus {
   animation: fade-lift 0.28s ease both;
 }
 
+.sd-endpoint-overlay {
+  z-index: 50;
+}
+
 .prompt-modal-panel {
   width: min(720px, 100%);
   max-height: min(90dvh, 900px);

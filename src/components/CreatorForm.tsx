@@ -198,6 +198,8 @@ export function CreatorForm({
   }
 
   async function handleGenerateFromModal(assembled: string) {
+    // Dismiss prompt sheet immediately so Generate / SD settings aren't buried under it.
+    setModalOpen(false);
     await onGenerateImages({
       prompt: assembled,
       subject: subjectForGenerate,
@@ -211,7 +213,11 @@ export function CreatorForm({
       backgroundMode,
       imageCount: modalImageCount,
     });
+  }
+
+  function handleOpenEndpointFromModal() {
     setModalOpen(false);
+    onOpenEndpoint();
   }
 
   return (
@@ -440,7 +446,7 @@ export function CreatorForm({
           if (!busy) setModalOpen(false);
         }}
         onGenerate={handleGenerateFromModal}
-        onOpenEndpoint={onOpenEndpoint}
+        onOpenEndpoint={handleOpenEndpointFromModal}
       />
     </>
   );
