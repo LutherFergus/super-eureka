@@ -128,6 +128,16 @@ textarea {
   line-height: 1.4;
 }
 
+.form-hint-banner {
+  margin: 0 0 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(181, 106, 58, 0.12);
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .sd-endpoint-panel code {
   font-size: 0.88em;
   background: rgba(20, 32, 28, 0.06);

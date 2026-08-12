@@ -56,36 +56,95 @@ type Txt2ImgResponse = {
   error?: string;
 };
 
+/** GitHub Pages is HTTPS — browsers block fetch() to http:// LAN IPs. */
+export function mixedContentBlockReason(baseUrl: string): string | null {
+  if (typeof window === "undefined") return null;
+  if (window.location.protocol !== "https:") return null;
+  try {
+    const url = new URL(baseUrl);
+    if (url.protocol === "http:") {
+      return [
+        "Blocked by the browser: this Mosaic page is HTTPS, so it cannot call an http:// PC address (mixed content).",
+        "Fix: give Mosaic an https:// URL to your WebUI — easiest is a Cloudflare Tunnel to port 7860 — then Test again.",
+        "Stability Matrix launch args still need: --api --listen --cors-allow-origins=https://lutherfergus.github.io",
+      ].join(" ");
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function endpointErrorMessage(error: unknown, baseUrl: string): string {
+  const mixed = mixedContentBlockReason(baseUrl);
+  if (mixed) return mixed;
+
   if (error instanceof TypeError) {
     return [
       `Could not reach Stable Diffusion at ${baseUrl}.`,
-      "On your PC: start Automatic1111/Forge with --api --listen, and allow CORS.",
-      "On your phone: use your PC’s LAN IP (same Wi‑Fi) or a Cloudflare/Tailscale tunnel URL.",
+      "Checklist: WebUI running in Stability Matrix; args include --api --listen;",
+      "CORS includes https://lutherfergus.github.io;",
+      "phone on same Wi‑Fi OR use an https tunnel URL;",
+      "Windows Firewall allows the WebUI port.",
     ].join(" ");
   }
   if (error instanceof Error) return error.message;
   return "Local Stable Diffusion request failed.";
 }
 
-/** Ping A1111-compatible API. */
+async function probeApi(base: string, path: string): Promise<Response> {
+  return fetch(`${base}${path}`, {
+    method: "GET",
+    mode: "cors",
+    cache: "no-store",
+  });
+}
+
+/** Ping A1111/Forge-compatible API. */
 export async function testSdEndpoint(baseUrl: string): Promise<string> {
-  const url = `${baseUrl.replace(/\/+$/, "")}/sdapi/v1/sd-models`;
-  try {
-    const response = await fetch(url, { method: "GET" });
-    if (!response.ok) {
+  const base = baseUrl.replace(/\/+$/, "");
+  const mixed = mixedContentBlockReason(base);
+  if (mixed) throw new Error(mixed);
+
+  const paths = ["/sdapi/v1/sd-models", "/sdapi/v1/options", "/sdapi/v1/progress"];
+
+  let lastError: unknown;
+  for (const path of paths) {
+    try {
+      const response = await probeApi(base, path);
+      if (response.ok) {
+        if (path.endsWith("sd-models")) {
+          const models = (await response.json()) as unknown;
+          const count = Array.isArray(models) ? models.length : 0;
+          return count > 0
+            ? `Connected — ${count} model${count === 1 ? "" : "s"} available.`
+            : "Connected — API is reachable.";
+        }
+        return `Connected — API responded OK (${path}).`;
+      }
+      if (response.status === 404) {
+        lastError = new Error(
+          `API path missing (${path}). Use Automatic1111 or Forge in Stability Matrix with --api (ComfyUI uses a different API).`,
+        );
+        continue;
+      }
       throw new Error(
         `Endpoint responded ${response.status}. Is the WebUI API enabled (--api)?`,
       );
+    } catch (error) {
+      lastError = error;
+      // Try next probe path only for 404-style misses; network/CORS fail immediately.
+      if (
+        error instanceof Error &&
+        error.message.includes("API path missing")
+      ) {
+        continue;
+      }
+      throw new Error(endpointErrorMessage(error, base));
     }
-    const models = (await response.json()) as unknown;
-    const count = Array.isArray(models) ? models.length : 0;
-    return count > 0
-      ? `Connected — ${count} model${count === 1 ? "" : "s"} available.`
-      : "Connected — API is reachable.";
-  } catch (error) {
-    throw new Error(endpointErrorMessage(error, baseUrl));
   }
+
+  throw new Error(endpointErrorMessage(lastError, base));
 }
 
 export async function generateWithLocalSd(options: {
@@ -96,6 +155,9 @@ export async function generateWithLocalSd(options: {
   imageCount: number;
 }): Promise<LocalSdImage[]> {
   const base = options.baseUrl.replace(/\/+$/, "");
+  const mixed = mixedContentBlockReason(base);
+  if (mixed) throw new Error(mixed);
+
   const { width, height } = sizeForAspect(
     options.aspectRatio,
     options.blanketSize,
@@ -106,6 +168,7 @@ export async function generateWithLocalSd(options: {
   try {
     const response = await fetch(url, {
       method: "POST",
+      mode: "cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: options.prompt,

@@ -7,7 +7,7 @@ import {
   normalizeSdEndpoint,
   saveSdEndpoint,
 } from "@/lib/sdEndpoint";
-import { testSdEndpoint } from "@/lib/localSd";
+import { mixedContentBlockReason, testSdEndpoint } from "@/lib/localSd";
 
 type SdEndpointGateProps = {
   open: boolean;
@@ -27,6 +27,7 @@ export function SdEndpointGate({
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +36,11 @@ export function SdEndpointGate({
     setHasSaved(Boolean(existing));
     setError(null);
     setStatus(null);
+    setHint(
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "This page is HTTPS. Test/Generate need an https:// WebUI URL (Cloudflare Tunnel), not plain http://192.168… from the phone."
+        : null,
+    );
     const timer = window.setTimeout(() => inputRef.current?.focus(), 40);
     return () => window.clearTimeout(timer);
   }, [open]);
@@ -46,13 +52,30 @@ export function SdEndpointGate({
     setError(null);
     setStatus(null);
     try {
+      if (!value.trim()) {
+        throw new Error("Paste your WebUI URL first.");
+      }
       const normalized = normalizeSdEndpoint(value);
+      const blocked = mixedContentBlockReason(normalized);
+      if (blocked) {
+        throw new Error(blocked);
+      }
       const message = await testSdEndpoint(normalized);
       setStatus(message);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connection failed.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  function handleOpenWebUi() {
+    setError(null);
+    try {
+      const normalized = normalizeSdEndpoint(value || "http://127.0.0.1:7860");
+      window.open(normalized, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid URL.");
     }
   }
 
@@ -78,9 +101,13 @@ export function SdEndpointGate({
         <p className="prompt-modal-eyebrow">Local PC</p>
         <h2 id="sd-endpoint-title">Stable Diffusion endpoint</h2>
         <p className="prompt-modal-copy">
-          Run Automatic1111 or Forge on your computer with{" "}
-          <code>--api --listen</code>, then paste the URL your phone can reach
-          (same Wi‑Fi LAN IP, or a Cloudflare / Tailscale tunnel).
+          In Stability Matrix, launch Automatic1111 or Forge with{" "}
+          <code>
+            --api --listen --cors-allow-origins=https://lutherfergus.github.io
+          </code>
+          . Because Mosaic is on HTTPS, use a Cloudflare Tunnel{" "}
+          <code>https://…</code> URL here (plain <code>http://192.168…</code>{" "}
+          is blocked by the phone browser).
         </p>
 
         <div className="field">
@@ -88,20 +115,22 @@ export function SdEndpointGate({
           <input
             ref={inputRef}
             id={inputId}
-            type="url"
+            type="text"
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="http://192.168.1.20:7860"
+            placeholder="https://your-tunnel.trycloudflare.com"
             value={value}
             onChange={(event) => setValue(event.target.value)}
           />
           <p className="field-hint">
-            Example: <code>http://192.168.1.20:7860</code> — not localhost from
-            your phone (that points at the phone itself).
+            On the PC:{" "}
+            <code>cloudflared tunnel --url http://127.0.0.1:7860</code> then
+            paste the https URL it prints.
           </p>
         </div>
 
+        {hint ? <p className="form-hint-banner">{hint}</p> : null}
         {status ? <p className="form-status">{status}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
 
@@ -116,6 +145,14 @@ export function SdEndpointGate({
             onClick={() => void handleTest()}
           >
             {busy ? "Testing…" : "Test"}
+          </button>
+          <button
+            className="ghost-on-light"
+            type="button"
+            disabled={busy || !value.trim()}
+            onClick={handleOpenWebUi}
+          >
+            Open WebUI
           </button>
           <button
             className="ghost-on-light"
